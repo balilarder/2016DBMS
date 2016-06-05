@@ -39,16 +39,51 @@ typedef struct
 {
 	Slot_Book *buckets[10];
 }HashTable_isbn;
+typedef struct 
+{
+	Slot_Book *buckets[10];
+}HashTable_author;
+typedef struct 
+{
+	Slot_Book *buckets[10];
+}HashTable_title;
+typedef struct 
+{
+	Slot_Book *buckets[10];
+}HashTable_price;
+typedef struct 
+{
+	Slot_Book *buckets[10];
+}HashTable_subject;
+typedef struct 
+{
+	Slot_sellRecord *buckets[10];
+}HashTable_uid;
+typedef struct 
+{
+	Slot_sellRecord *buckets[10];
+}HashTable_no;
+typedef struct 
+{
+	Slot_sellRecord *buckets[10];
+}HashTable_isbn_no;
 
 int countlines(FILE *fp);			//know how many entries
 char *str_duplicate(const char *s);	//write data to struct of entries
 
 //link list
-Slot_Book *create_node(char *data, int  EntryBook_id);
-
+Slot_Book *create_book_node();
+Slot_sellRecord *create_sell_node();
 //do hashing
 int hash_function(char *key);
 void hashing_isbn(HashTable_isbn *h, EntryBook *entries, int num);
+void hashing_author(HashTable_author *h, EntryBook *entries, int num);
+void hashing_title(HashTable_title *h, EntryBook *entries, int num);
+void hashing_price(HashTable_price *h, EntryBook *entries, int num);
+void hashing_subject(HashTable_subject *h, EntryBook *entries, int num);
+void hashing_uid(HashTable_uid *h, EntrySellRecord *entries, int num);
+void hashing_no(HashTable_no *h, EntrySellRecord *entries, int num);
+void hashing_isbn_no(HashTable_isbn_no *h, EntrySellRecord *entries, int num);
 
 int  main(int argc, char const *argv[])
 {
@@ -87,7 +122,7 @@ int  main(int argc, char const *argv[])
 		}
 		/*turn '\n' to null char*/
 	        	int t = 0;
-	        	while(line[t] != '\n')
+	        	while(line[t] != 13)
 	        		t++;
 	        	line[t] = '\0';
 	        	/*split string by '|' and has 5 attributes*/
@@ -125,7 +160,7 @@ int  main(int argc, char const *argv[])
 		}
 		/*turn '\n' to null char*/
 	        	int t = 0;
-	        	while(line[t] != '\n')
+	        	while(line[t] != 13)
 	        		t++;
 	        	line[t] = '\0';
 	        	/*split string by '|' and has 3 attributes*/
@@ -144,10 +179,10 @@ int  main(int argc, char const *argv[])
   		fill++;
     	}
 
-    	/*for(i = 0; i < fp1lines - 1; i++)
-    		printf("%s\n",allEntryBook[i].title );
+    	for(i = 0; i < fp1lines - 1; i++)
+    		printf("%s\n",allEntryBook[i].subject );
     	for(i = 0; i < fp2lines - 1; i++)
-    		printf("%s\n",allEntrySellRecord[i].isbn_no );*/
+    		printf("%s\n",allEntrySellRecord[i].isbn_no );
 
     	fclose(fp1);
     	fclose(fp2);
@@ -159,22 +194,165 @@ int  main(int argc, char const *argv[])
     	for(i = 0; i < 10; i++)
     		allIsbn.buckets[i] = NULL;
     	hashing_isbn(&allIsbn, allEntryBook, fp1lines - 1);
-    	//check link list:
-    	printf("check link list:\n");
+    	//write to file:
+    	FILE *write_isbn;
+    	write_isbn = fopen("HashTable_isbn.txt", "w");
     	for(i = 0;i < 10; i++)
     	{
-    		printf("%d: ",i);
+    		fprintf(write_isbn, "Bucket %d   ",i );
     		Slot_Book *ptr = allIsbn.buckets[i];
     		while(ptr != NULL)
     		{
-    			printf("%s -> ", ptr -> data);
+    			fprintf(write_isbn, "%s(%d), ", ptr -> data, ptr -> EntryBook_id);
     			ptr = ptr -> next;
     		}
-    		printf("\n");
+    		fprintf(write_isbn, "\n");
     	}
+    	fclose(write_isbn);
+    	//2.
+    	HashTable_author allAuthor;
+    	for(i = 0; i < 10; i++)
+    		allAuthor.buckets[i] = NULL;
+    	hashing_author(&allAuthor, allEntryBook, fp1lines - 1);
+    	//write to file:
+    	FILE *write_author;
+    	write_author = fopen("HashTable_author.txt", "w");
+    	for(i = 0;i < 10; i++)
+    	{
+    		fprintf(write_author, "Bucket %d   ",i );
+    		Slot_Book *ptr = allAuthor.buckets[i];
+    		while(ptr != NULL)
+    		{
+    			fprintf(write_author, "%s(%d), ", ptr -> data, ptr -> EntryBook_id);
+    			ptr = ptr -> next;
+    		}
+    		fprintf(write_author, "\n");
+    	}
+    	fclose(write_author);
+    	//3.
+    	HashTable_title allTitle;
+    	for(i = 0; i < 10; i++)
+    		allTitle.buckets[i] = NULL;
+    	hashing_title(&allTitle, allEntryBook, fp1lines - 1);
+    	//write to file:
+    	FILE *write_title;
+    	write_title = fopen("HashTable_title.txt", "w");
+    	for(i = 0;i < 10; i++)
+    	{
+    		fprintf(write_title, "Bucket %d   ",i );
+    		Slot_Book *ptr = allTitle.buckets[i];
+    		while(ptr != NULL)
+    		{
+    			fprintf(write_title, "%s(%d), ", ptr -> data, ptr -> EntryBook_id);
+    			ptr = ptr -> next;
+    		}
+    		fprintf(write_title, "\n");
+    	}
+    	fclose(write_title);
+    	//4.
+    	HashTable_price allPrice;
+    	for(i = 0; i < 10; i++)
+    		allPrice.buckets[i] = NULL;
+    	hashing_price(&allPrice, allEntryBook, fp1lines - 1);
+    	//write to file:
+    	FILE *write_price;
+    	write_price = fopen("HashTable_price.txt", "w");
+    	for(i = 0;i < 10; i++)
+    	{
+    		fprintf(write_price, "Bucket %d   ",i );
+    		Slot_Book *ptr = allPrice.buckets[i];
+    		while(ptr != NULL)
+    		{
+    			fprintf(write_price, "%s(%d), ", ptr -> data, ptr -> EntryBook_id);
+    			ptr = ptr -> next;
+    		}
+    		fprintf(write_price, "\n");
+    	}
+    	fclose(write_price);
+    	//5.
+    	HashTable_subject allSubject;
+    	for(i = 0; i < 10; i++)
+    		allSubject.buckets[i] = NULL;
+    	hashing_subject(&allSubject, allEntryBook, fp1lines - 1);
+    	//write to file:
+    	FILE *write_subject;
+    	write_subject = fopen("HashTable_subject.txt", "w");
+    	for(i = 0;i < 10; i++)
+    	{
+    		fprintf(write_subject, "Bucket %d   ",i );
+    		Slot_Book *ptr = allSubject.buckets[i];
+    		while(ptr != NULL)
+    		{
+    			fprintf(write_subject, "%s(%d), ", ptr -> data, ptr -> EntryBook_id);
+    			ptr = ptr -> next;
+    		}
+    		fprintf(write_subject, "\n");
+    	}
+    	fclose(write_subject);
+    	//6.
+    	HashTable_uid allUid;
+    	for(i = 0; i < 10; i++)
+    		allUid.buckets[i] = NULL;
+    	hashing_uid(&allUid, allEntrySellRecord, fp2lines - 1);
+    	//write to file:
+    	FILE *write_uid;
+    	write_uid = fopen("HashTable_uid.txt", "w");
+    	for(i = 0;i < 10; i++)
+    	{
+    		fprintf(write_uid, "Bucket %d   ",i );
+    		Slot_sellRecord *ptr = allUid.buckets[i];
+    		while(ptr != NULL)
+    		{
+    			fprintf(write_uid, "%s(%d), ", ptr -> data, ptr -> EntrySellRecord_id);
+    			ptr = ptr -> next;
+    		}
+    		fprintf(write_uid, "\n");
+    	}
+    	fclose(write_uid);
+    	//7.
+    	HashTable_no allNo;
+    	for(i = 0; i < 10; i++)
+    		allNo.buckets[i] = NULL;
+    	hashing_no(&allNo, allEntrySellRecord, fp2lines - 1);
+    	//write to file:
+    	FILE *write_no;
+    	write_no = fopen("HashTable_no.txt", "w");
+    	for(i = 0;i < 10; i++)
+    	{
+    		fprintf(write_no, "Bucket %d   ",i );
+    		Slot_sellRecord *ptr = allNo.buckets[i];
+    		while(ptr != NULL)
+    		{
+    			fprintf(write_no, "%s(%d), ", ptr -> data, ptr -> EntrySellRecord_id);
+    			ptr = ptr -> next;
+    		}
+    		fprintf(write_no, "\n");
+    	}
+    	fclose(write_no);
+    	//8.
+    	HashTable_isbn_no allIsbn_No;
+    	for(i = 0; i < 10; i++)
+    		allIsbn_No.buckets[i] = NULL;
+    	hashing_isbn_no(&allIsbn_No, allEntrySellRecord, fp2lines - 1);
+    	//write to file:
+    	FILE *write_isbn_no;
+    	write_isbn_no = fopen("HashTable_isbn_no.txt", "w");
+    	for(i = 0;i < 10; i++)
+    	{
+    		fprintf(write_isbn_no, "Bucket %d   ",i );
+    		Slot_sellRecord *ptr = allIsbn_No.buckets[i];
+    		while(ptr != NULL)
+    		{
+    			fprintf(write_isbn_no, "%s(%d), ", ptr -> data, ptr -> EntrySellRecord_id);
+    			ptr = ptr -> next;
+    		}
+    		fprintf(write_isbn_no, "\n");
+    	}
+    	fclose(write_isbn_no);
+	
+	//start to read query:
 
-    	
-    	
+
 	return 0;
 }
 
@@ -197,9 +375,17 @@ char *str_duplicate(const char *s)
 	strcpy(d, s);
 	return d ;
 }
-Slot_Book *create_node(char *data, int EntryBook_id)
+Slot_Book *create_book_node()
 {
 	Slot_Book *ptr = (Slot_Book *)malloc(sizeof(Slot_Book));
+	if(ptr ==NULL)
+		exit(1);
+
+	return ptr;
+}
+Slot_sellRecord *create_sell_node()
+{
+	Slot_sellRecord *ptr = (Slot_sellRecord *)malloc(sizeof(Slot_sellRecord));
 	if(ptr ==NULL)
 		exit(1);
 
@@ -221,7 +407,6 @@ int hash_function(char *key)	//return a integer to decide which bucket
 void hashing_isbn(HashTable_isbn *h, EntryBook *entries, int entry_number)
 {
 	//init hash table
-	printf("print all of isbn:\n");
 	int i;
 	for(i = 0; i < entry_number; i++)
 	{	
@@ -232,7 +417,7 @@ void hashing_isbn(HashTable_isbn *h, EntryBook *entries, int entry_number)
 		if(h -> buckets[hash_result] == NULL)
 		{	
 			
-			h -> buckets[hash_result] = create_node(entries[i].isbn, hash_result);
+			h -> buckets[hash_result] = create_book_node();
 			h -> buckets[hash_result] -> data = str_duplicate(entries[i].isbn);
 			h -> buckets[hash_result] -> EntryBook_id = i;
 			h -> buckets[hash_result] -> next = NULL;
@@ -244,7 +429,7 @@ void hashing_isbn(HashTable_isbn *h, EntryBook *entries, int entry_number)
 
 			while(now -> next != NULL)	
 				now = now -> next;
-			now -> next = create_node(entries[i].isbn, hash_result);
+			now -> next = create_book_node();
 			now -> next -> data = str_duplicate(entries[i].isbn);
 			now -> next -> EntryBook_id = i;
 			now -> next -> next = NULL;
@@ -252,4 +437,234 @@ void hashing_isbn(HashTable_isbn *h, EntryBook *entries, int entry_number)
 	}
 	return;
 }
+void hashing_author(HashTable_author *h, EntryBook *entries, int entry_number)
+{
+	//init hash table
+	int i;
+	for(i = 0; i < entry_number; i++)
+	{	
+		printf("%s-----",entries[i].author );
+		//do hash
+		int hash_result = hash_function(entries[i].author);
+		printf("hash result is %d\n",hash_result );
+		if(h -> buckets[hash_result] == NULL)
+		{	
+			
+			h -> buckets[hash_result] = create_book_node();
+			h -> buckets[hash_result] -> data = str_duplicate(entries[i].author);
+			h -> buckets[hash_result] -> EntryBook_id = i;
+			h -> buckets[hash_result] -> next = NULL;
+		}
+		else
+		{
+			//go to the final element, and insert new one in behind
+			Slot_Book *now = h ->buckets[hash_result];
 
+			while(now -> next != NULL)	
+				now = now -> next;
+			now -> next = create_book_node();
+			now -> next -> data = str_duplicate(entries[i].author);
+			now -> next -> EntryBook_id = i;
+			now -> next -> next = NULL;
+		} 
+	}
+	return;
+}
+void hashing_title(HashTable_title *h, EntryBook *entries, int entry_number)
+{
+	//init hash table
+	int i;
+	for(i = 0; i < entry_number; i++)
+	{	
+		printf("%s-----",entries[i].title);
+		//do hash
+		int hash_result = hash_function(entries[i].title);
+		printf("hash result is %d\n",hash_result );
+		if(h -> buckets[hash_result] == NULL)
+		{	
+			
+			h -> buckets[hash_result] = create_book_node();
+			h -> buckets[hash_result] -> data = str_duplicate(entries[i].title);
+			h -> buckets[hash_result] -> EntryBook_id = i;
+			h -> buckets[hash_result] -> next = NULL;
+		}
+		else
+		{
+			//go to the final element, and insert new one in behind
+			Slot_Book *now = h ->buckets[hash_result];
+
+			while(now -> next != NULL)	
+				now = now -> next;
+			now -> next = create_book_node();
+			now -> next -> data = str_duplicate(entries[i].title);
+			now -> next -> EntryBook_id = i;
+			now -> next -> next = NULL;
+		} 
+	}
+	return;
+}
+void hashing_price(HashTable_price *h, EntryBook *entries, int entry_number)
+{
+	//init hash table
+	int i;
+	for(i = 0; i < entry_number; i++)
+	{	
+		printf("%s-----",entries[i].price);
+		//do hash
+		int hash_result = hash_function(entries[i].price);
+		printf("hash result is %d\n",hash_result );
+		if(h -> buckets[hash_result] == NULL)
+		{	
+			
+			h -> buckets[hash_result] = create_book_node();
+			h -> buckets[hash_result] -> data = str_duplicate(entries[i].price);
+			h -> buckets[hash_result] -> EntryBook_id = i;
+			h -> buckets[hash_result] -> next = NULL;
+		}
+		else
+		{
+			//go to the final element, and insert new one in behind
+			Slot_Book *now = h ->buckets[hash_result];
+
+			while(now -> next != NULL)	
+				now = now -> next;
+			now -> next = create_book_node();
+			now -> next -> data = str_duplicate(entries[i].price);
+			now -> next -> EntryBook_id = i;
+			now -> next -> next = NULL;
+		} 
+	}
+	return;
+}
+void hashing_subject(HashTable_subject *h, EntryBook *entries, int entry_number)
+{
+	//init hash table
+	int i;
+	for(i = 0; i < entry_number; i++)
+	{	
+		printf("%s-----",entries[i].subject);
+		//do hash
+		int hash_result = hash_function(entries[i].subject);
+		printf("hash result is %d\n",hash_result );
+		if(h -> buckets[hash_result] == NULL)
+		{	
+			
+			h -> buckets[hash_result] = create_book_node();
+			h -> buckets[hash_result] -> data = str_duplicate(entries[i].subject);
+			h -> buckets[hash_result] -> EntryBook_id = i;
+			h -> buckets[hash_result] -> next = NULL;
+		}
+		else
+		{
+			//go to the final element, and insert new one in behind
+			Slot_Book *now = h ->buckets[hash_result];
+
+			while(now -> next != NULL)	
+				now = now -> next;
+			now -> next = create_book_node();
+			now -> next -> data = str_duplicate(entries[i].subject);
+			now -> next -> EntryBook_id = i;
+			now -> next -> next = NULL;
+		} 
+	}
+	return;
+}
+void hashing_uid(HashTable_uid *h, EntrySellRecord *entries, int entry_number)
+{
+	//init hash table
+	int i;
+	for(i = 0; i < entry_number; i++)
+	{	
+		printf("%s-----",entries[i].uid);
+		//do hash
+		int hash_result = hash_function(entries[i].uid);
+		printf("hash result is %d\n",hash_result );
+		if(h -> buckets[hash_result] == NULL)
+		{	
+			
+			h -> buckets[hash_result] = create_sell_node();
+			h -> buckets[hash_result] -> data = str_duplicate(entries[i].uid);
+			h -> buckets[hash_result] -> EntrySellRecord_id = i;
+			h -> buckets[hash_result] -> next = NULL;
+		}
+		else
+		{
+			//go to the final element, and insert new one in behind
+			Slot_sellRecord *now = h ->buckets[hash_result];
+
+			while(now -> next != NULL)	
+				now = now -> next;
+			now -> next = create_sell_node();
+			now -> next -> data = str_duplicate(entries[i].uid);
+			now -> next -> EntrySellRecord_id = i;
+			now -> next -> next = NULL;
+		} 
+	}
+	return;
+}
+void hashing_no(HashTable_no *h, EntrySellRecord *entries, int entry_number)
+{
+	//init hash table
+	int i;
+	for(i = 0; i < entry_number; i++)
+	{	
+		printf("%s-----",entries[i].no);
+		//do hash
+		int hash_result = hash_function(entries[i].no);
+		printf("hash result is %d\n",hash_result );
+		if(h -> buckets[hash_result] == NULL)
+		{	
+			
+			h -> buckets[hash_result] = create_sell_node();
+			h -> buckets[hash_result] -> data = str_duplicate(entries[i].no);
+			h -> buckets[hash_result] -> EntrySellRecord_id = i;
+			h -> buckets[hash_result] -> next = NULL;
+		}
+		else
+		{
+			//go to the final element, and insert new one in behind
+			Slot_sellRecord *now = h ->buckets[hash_result];
+
+			while(now -> next != NULL)	
+				now = now -> next;
+			now -> next = create_sell_node();
+			now -> next -> data = str_duplicate(entries[i].no);
+			now -> next -> EntrySellRecord_id = i;
+			now -> next -> next = NULL;
+		} 
+	}
+	return;
+}
+void hashing_isbn_no(HashTable_isbn_no *h, EntrySellRecord *entries, int entry_number)
+{
+	//init hash table
+	int i;
+	for(i = 0; i < entry_number; i++)
+	{	
+		printf("%s-----",entries[i].isbn_no);
+		//do hash
+		int hash_result = hash_function(entries[i].isbn_no);
+		printf("hash result is %d\n",hash_result );
+		if(h -> buckets[hash_result] == NULL)
+		{	
+			
+			h -> buckets[hash_result] = create_sell_node();
+			h -> buckets[hash_result] -> data = str_duplicate(entries[i].isbn_no);
+			h -> buckets[hash_result] -> EntrySellRecord_id = i;
+			h -> buckets[hash_result] -> next = NULL;
+		}
+		else
+		{
+			//go to the final element, and insert new one in behind
+			Slot_sellRecord *now = h ->buckets[hash_result];
+
+			while(now -> next != NULL)	
+				now = now -> next;
+			now -> next = create_sell_node();
+			now -> next -> data = str_duplicate(entries[i].isbn_no);
+			now -> next -> EntrySellRecord_id = i;
+			now -> next -> next = NULL;
+		} 
+	}
+	return;
+}
