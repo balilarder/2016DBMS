@@ -350,136 +350,331 @@ int  main(int argc, char const *argv[])
 
 
 	//start to read query:
-    	char *query;
+    	char query[1000];
 	char select[100], from[100], where[100];
-	char *start, *end;
-	bool select_exist = 0, from_exist = 0, where_exist = 0, ending_exist = 0;
-	query = "SELECT title FROM books,sellRecord WHERE isbn = isbn_no AND author =‘J. K. Rowling’; ";
-	//fgets(query, 1000, stdin);
-	printf("%s\n",query );
-
-	if(strstr(query, "SELECT") != NULL)
-		select_exist = 1;
-	if(strstr(query, "FROM") != NULL)
-		from_exist = 1;
-	if(strstr(query, "WHERE") != NULL)
-		where_exist = 1;
-	if(strstr(query, ";") != NULL)
-		ending_exist = 1;
-
-	printf("%d %d %d\n",select_exist,from_exist,where_exist );
-	if(select_exist == 0 || from_exist == 0 || ending_exist == 0)
+	while(1)
 	{
-		printf("SQL syntax error\n");
-		return 0;
-	}
-	
-	if(where_exist == 0)
-	{
-		//a query don't have condition
-		printf("a query don't have condition\n");
-		start = strstr(query, "SELECT") + 7;
-		end = strstr(query, "FROM") - 2;
-		if(!(start <= end))
+		char *start, *end;
+		bool select_exist = 0, from_exist = 0, where_exist = 0, ending_exist = 0;
+		printf("input query:\n");
+		fgets(query, 1000, stdin);
+		printf("%s\n",query );
+		if(strcmp(query, "exit\n") == 0)
+			break;
+		if(strstr(query, "SELECT ") != NULL)
+			select_exist = 1;
+		if(strstr(query, " FROM ") != NULL)
+			from_exist = 1;
+		if(strstr(query, " WHERE ") != NULL)
+			where_exist = 1;
+		if(strstr(query, ";") != NULL)
+			ending_exist = 1;
+
+		printf("%d %d %d\n",select_exist,from_exist,where_exist );
+		if(select_exist == 0 || from_exist == 0 || ending_exist == 0)
 		{
-			printf("order wrong\n");
-			return 0;
+			printf("SQL syntax error\n");
+			continue;
 		}
-		fill_sql(select, start,end);
-		printf("%s\n",select );
-
-		start = strstr(query, "FROM") + 5;
-		end = strstr(query, ";") - 1;
-		if(!(start <= end))
-		{	
-			printf("order wrong\n");
-			return 0;
-		}
-		fill_sql(from, start,end);
-		printf("%s\n",from);
-
 		
-
-		printf("let's analyze(1,1,0)\n");
-		//three types: 
-		/*
-		(1)select = '*' (contain other than * is error)
-		(2)select = some attribute
-		(3)select contain DISTINCT
-		*/
-		if(strstr(select, "*") != NULL)
+		if(where_exist == 0)
 		{
-			if(strcmp(select, "*") == 0)
+			//a query don't have condition
+			printf("a query don't have condition\n");
+			start = strstr(query, "SELECT") + 7;
+			end = strstr(query, "FROM") - 2;
+			if(!(start <= end))
 			{
-				printf("select == *, accept\n");
+				printf("order wrong\n");
+				continue;
+			}
+			fill_sql(select, start,end);
+			printf("%s\n",select );
+
+			start = strstr(query, "FROM") + 5;
+			end = strstr(query, ";") - 1;
+			if(!(start <= end))
+			{	
+				printf("order wrong\n");
+				continue;
+			}
+			fill_sql(from, start,end);
+			printf("%s\n",from);
+
+			
+
+			printf("let's analyze(1,1,0)\n");
+			//three types: 
+			/*
+			(1)select = '*' (contain other than * is error)
+			(2)select = some attribute
+			(3)select contain DISTINCT
+			*/
+			if(strstr(select, "*") != NULL)
+			{
+				if(strcmp(select, "*") == 0)
+				{
+					printf("select == *, accept\n");
+					if(strcmp(from, "books") == 0)  
+					{
+						printf("print all book.txt\n" );
+						printf("%-15s%-40s%-60s%-8s%-10s\n", "isbn", "author", "title", "price", "subject");
+						int i;
+						for(i = 0; i < fp1lines - 1; i++)
+							printf("%-15s%-40s%-60s%-8s%-10s\n", allEntryBook[i].isbn, allEntryBook[i].author, allEntryBook[i].title, allEntryBook[i].price, allEntryBook[i].subject);
+
+
+					}
+					else if (strcmp(from, "sellRecord") == 0)
+					{
+						printf("print all sellRecord.txt\n");
+						printf("%-5s%-5s%-15s\n", "uid", "no", "isbn_no");
+						int i;
+						for(i = 0; i < fp2lines - 1; i++)
+							printf("%-5s%-5s%-15s\n", allEntrySellRecord[i].uid, allEntrySellRecord[i].no, allEntrySellRecord[i].isbn_no);
+					}
+					else
+					{
+						printf("no such table\n");
+						continue;
+					}
+				}
+				else
+				{
+					printf("syntax error\n");
+					continue;
+				}
+			}
+			else if(strstr(select, "DISTINCT") != NULL)
+			{
+				if(strstr(select, "DISTINCT ") == NULL)
+				{
+					printf("DISTINCT syntax error\n");
+					continue;
+				}
+				else
+				{
+					printf("DISTINCT correct\n");
+					if(strcmp(from, "books") == 0)  
+					{
+						
+						char distinct_attri[100];
+						start = strstr(query, "DISTINCT") + 9;
+						end = strstr(query, "FROM") - 2;
+						fill_sql(distinct_attri, start, end);
+						printf("%s\n",distinct_attri );
+						if(strcmp(distinct_attri, "isbn") != 0 && strcmp(distinct_attri, "author") != 0 && strcmp(distinct_attri, "title") != 0 && strcmp(distinct_attri, "price") != 0 && strcmp(distinct_attri, "subject") != 0)
+						{
+							printf("no such attribute\n");
+							continue;
+						}
+						else
+						{
+							printf("print DISTINCT %s in book.txt\n",distinct_attri );
+							bool find_distinct[fp1lines -1];
+							int i;
+							for(i = 0; i < fp1lines - 1; i++)
+								find_distinct[i] = 1;
+							if(strcmp(distinct_attri, "isbn") == 0)
+							{
+								printf("DISTINCT_isbn\n");
+								for(i = 0; i < fp1lines - 1; i++)
+								{
+									if(find_distinct[i])
+										printf("%s\n",allEntryBook[i].isbn );
+									int j;
+									for(j = i + 1; j < fp1lines - 1; j++)
+									{
+										if(strcmp(allEntryBook[j].isbn, allEntryBook[i].isbn) == 0)
+											find_distinct[j] = 0;
+									}
+								}
+							}
+							else if(strcmp(distinct_attri, "author") == 0)
+							{
+								printf("DISTINCT_author\n");
+								for(i = 0; i < fp1lines - 1; i++)
+								{
+									if(find_distinct[i])
+										printf("%s\n",allEntryBook[i].author );
+									int j;
+									for(j = i + 1; j < fp1lines - 1; j++)
+									{
+										if(strcmp(allEntryBook[j].author, allEntryBook[i].author) == 0)
+											find_distinct[j] = 0;
+									}
+								}
+							}
+							else if(strcmp(distinct_attri, "title") == 0)
+							{
+								printf("DISTINCT_title\n");
+								for(i = 0; i < fp1lines - 1; i++)
+								{
+									if(find_distinct[i])
+										printf("%s\n",allEntryBook[i].title );
+									int j;
+									for(j = i + 1; j < fp1lines - 1; j++)
+									{
+										if(strcmp(allEntryBook[j].title, allEntryBook[i].title) == 0)
+											find_distinct[j] = 0;
+									}
+								}
+							}
+							else if(strcmp(distinct_attri, "price") == 0)
+							{
+								printf("DISTINCT_price\n");
+								for(i = 0; i < fp1lines - 1; i++)
+								{
+									if(find_distinct[i])
+										printf("%s\n",allEntryBook[i].price );
+									int j;
+									for(j = i + 1; j < fp1lines - 1; j++)
+									{
+										if(strcmp(allEntryBook[j].price, allEntryBook[i].price) == 0)
+											find_distinct[j] = 0;
+									}
+								}
+							}
+							else
+							{
+								printf("DISTINCT_subject\n");
+								for(i = 0; i < fp1lines - 1; i++)
+								{
+									if(find_distinct[i])
+										printf("%s\n",allEntryBook[i].subject );
+									int j;
+									for(j = i + 1; j < fp1lines - 1; j++)
+									{
+										if(strcmp(allEntryBook[j].subject, allEntryBook[i].subject) == 0)
+											find_distinct[j] = 0;
+									}
+								}
+							}
+						}
+					}
+					else if(strcmp(from, "sellRecord") == 0)  
+					{
+						char distinct_attri[100];
+						start = strstr(query, "DISTINCT") + 9;
+						end = strstr(query, "FROM") - 2;
+						fill_sql(distinct_attri, start, end);
+						printf("%s\n",distinct_attri );
+						if(strcmp(distinct_attri, "uid") != 0 && strcmp(distinct_attri, "no") != 0 && strcmp(distinct_attri, "isbn_no") != 0)
+						{
+							printf("no such attribute\n");
+							continue;
+						}
+						else
+						{
+							printf("print DISTINCT %s in sellRecord.txt\n",distinct_attri );
+							bool find_distinct[fp2lines -1];
+							int i;
+							for(i = 0; i < fp2lines - 1; i++)
+								find_distinct[i] = 1;
+							if(strcmp(distinct_attri, "uid") == 0)
+							{
+								printf("DISTINCT_uid\n");
+								for(i = 0; i < fp2lines - 1; i++)
+								{
+									if(find_distinct[i])
+										printf("%s\n",allEntrySellRecord[i].uid );
+									int j;
+									for(j = i + 1; j < fp2lines - 1; j++)
+									{
+										if(strcmp(allEntrySellRecord[j].uid, allEntrySellRecord[i].uid) == 0)
+											find_distinct[j] = 0;
+									}
+								}
+							}
+							if(strcmp(distinct_attri, "no") == 0)
+							{
+								printf("DISTINCT_no\n");
+								for(i = 0; i < fp2lines - 1; i++)
+								{
+									if(find_distinct[i])
+										printf("%s\n",allEntrySellRecord[i].no );
+									int j;
+									for(j = i + 1; j < fp2lines - 1; j++)
+									{
+										if(strcmp(allEntrySellRecord[j].no, allEntrySellRecord[i].no) == 0)
+											find_distinct[j] = 0;
+									}
+								}
+							}
+							else
+							{
+								printf("DISTINCT_isbn_no\n");
+								for(i = 0; i < fp2lines - 1; i++)
+								{
+									if(find_distinct[i])
+										printf("%s\n",allEntrySellRecord[i].isbn_no );
+									int j;
+									for(j = i + 1; j < fp2lines - 1; j++)
+									{
+										if(strcmp(allEntrySellRecord[j].isbn_no, allEntrySellRecord[i].isbn_no) == 0)
+											find_distinct[j] = 0;
+									}
+								}
+							}
+
+						}
+					}
+					else
+					{
+						printf("no such table\n");
+						continue;
+					}
+				}
+
 			}
 			else
 			{
-				printf("syntax error\n");
-				return 0;
+				printf("a table with some attribute\n");
 			}
-		}
-		else if(strstr(select, "DISTINCT") != NULL)
-		{
-			if(strstr(select, " DISTINCT ") == NULL)
-			{
-				printf("DISTINCT syntax error\n");
-				return 0;
-			}
-			else
-			{
-				printf("DISTINCT correct\n");
-			}
-
 		}
 		else
 		{
-			printf("some attribute\n");
+			//a query has all select, from, where
+			printf("a query has all select, from, where\n");
+			start = strstr(query, "SELECT") + 7;
+			end = strstr(query, "FROM") - 2;
+			if(!(start <= end))
+			{
+				printf("order wrong\n");
+				continue;
+			}
+			fill_sql(select, start,end);
+			printf("%s\n",select );
+
+			start = strstr(query, "FROM") + 5;
+			end = strstr(query, "WHERE") - 2;
+			if(!(start <= end))
+			{	
+				printf("order wrong\n");
+				continue;
+			}
+			fill_sql(from, start,end);
+			printf("%s\n",from);
+
+			start = strstr(query, "WHERE") + 6;
+			end = strstr(query, ";") - 1;
+			if(!(start <= end))
+			{	
+				printf("order wrong\n");
+				continue;
+			}
+			fill_sql(where, start,end);
+			printf("%s\n",where);
+
+
+			printf("let's analyze(1,1,1)\n");
+			/*
+			two types:
+			(1) in a table(no join)
+			(2) in two table(join)
+			*/
 		}
 	}
-	else
-	{
-		//a query has all select, from, where
-		printf("a query has all select, from, where\n");
-		start = strstr(query, "SELECT") + 7;
-		end = strstr(query, "FROM") - 2;
-		if(!(start <= end))
-		{
-			printf("order wrong\n");
-			return 0;
-		}
-		fill_sql(select, start,end);
-		printf("%s\n",select );
-
-		start = strstr(query, "FROM") + 5;
-		end = strstr(query, "WHERE") - 2;
-		if(!(start <= end))
-		{	
-			printf("order wrong\n");
-			return 0;
-		}
-		fill_sql(from, start,end);
-		printf("%s\n",from);
-
-		start = strstr(query, "WHERE") + 6;
-		end = strstr(query, ";") - 1;
-		if(!(start <= end))
-		{	
-			printf("order wrong\n");
-			return 0;
-		}
-		fill_sql(where, start,end);
-		printf("%s\n",where);
-
-
-		printf("let's analyze(1,1,1)\n");
-		/*
-		two types:
-		(1) in a table(no join)
-		(2) in two table(join)
-		*/
-	}
-
 	return 0;
 }
 
