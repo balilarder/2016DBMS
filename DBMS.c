@@ -4,7 +4,7 @@ output: 8 files of hash table.*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <stdbool.h>
 typedef struct 
 {
 	char *isbn;
@@ -84,7 +84,8 @@ void hashing_subject(HashTable_subject *h, EntryBook *entries, int num);
 void hashing_uid(HashTable_uid *h, EntrySellRecord *entries, int num);
 void hashing_no(HashTable_no *h, EntrySellRecord *entries, int num);
 void hashing_isbn_no(HashTable_isbn_no *h, EntrySellRecord *entries, int num);
-
+//parse SQL
+void fill_sql(char *target, char *start, char *end);
 int  main(int argc, char const *argv[])
 {
 	FILE *fp1;
@@ -146,7 +147,7 @@ int  main(int argc, char const *argv[])
     	
     	//process file 2: sellRecord.txt
     	i = 0;	//use to remove first line, i control the lines
-	printf("use allSellRecord\n");
+
 	fill = 0;	//fill control pos to fill for allSellRecord
 	while (fgets(line, sizeof(line), fp2)) 
 	{
@@ -179,10 +180,6 @@ int  main(int argc, char const *argv[])
   		fill++;
     	}
 
-    	for(i = 0; i < fp1lines - 1; i++)
-    		printf("%s\n",allEntryBook[i].subject );
-    	for(i = 0; i < fp2lines - 1; i++)
-    		printf("%s\n",allEntrySellRecord[i].isbn_no );
 
     	fclose(fp1);
     	fclose(fp2);
@@ -350,8 +347,138 @@ int  main(int argc, char const *argv[])
     	}
     	fclose(write_isbn_no);
 	
-	//start to read query:
 
+
+	//start to read query:
+    	char *query;
+	char select[100], from[100], where[100];
+	char *start, *end;
+	bool select_exist = 0, from_exist = 0, where_exist = 0, ending_exist = 0;
+	query = "SELECT title FROM books,sellRecord WHERE isbn = isbn_no AND author =‘J. K. Rowling’; ";
+	//fgets(query, 1000, stdin);
+	printf("%s\n",query );
+
+	if(strstr(query, "SELECT") != NULL)
+		select_exist = 1;
+	if(strstr(query, "FROM") != NULL)
+		from_exist = 1;
+	if(strstr(query, "WHERE") != NULL)
+		where_exist = 1;
+	if(strstr(query, ";") != NULL)
+		ending_exist = 1;
+
+	printf("%d %d %d\n",select_exist,from_exist,where_exist );
+	if(select_exist == 0 || from_exist == 0 || ending_exist == 0)
+	{
+		printf("SQL syntax error\n");
+		return 0;
+	}
+	
+	if(where_exist == 0)
+	{
+		//a query don't have condition
+		printf("a query don't have condition\n");
+		start = strstr(query, "SELECT") + 7;
+		end = strstr(query, "FROM") - 2;
+		if(!(start <= end))
+		{
+			printf("order wrong\n");
+			return 0;
+		}
+		fill_sql(select, start,end);
+		printf("%s\n",select );
+
+		start = strstr(query, "FROM") + 5;
+		end = strstr(query, ";") - 1;
+		if(!(start <= end))
+		{	
+			printf("order wrong\n");
+			return 0;
+		}
+		fill_sql(from, start,end);
+		printf("%s\n",from);
+
+		
+
+		printf("let's analyze(1,1,0)\n");
+		//three types: 
+		/*
+		(1)select = '*' (contain other than * is error)
+		(2)select = some attribute
+		(3)select contain DISTINCT
+		*/
+		if(strstr(select, "*") != NULL)
+		{
+			if(strcmp(select, "*") == 0)
+			{
+				printf("select == *, accept\n");
+			}
+			else
+			{
+				printf("syntax error\n");
+				return 0;
+			}
+		}
+		else if(strstr(select, "DISTINCT") != NULL)
+		{
+			if(strstr(select, " DISTINCT ") == NULL)
+			{
+				printf("DISTINCT syntax error\n");
+				return 0;
+			}
+			else
+			{
+				printf("DISTINCT correct\n");
+			}
+
+		}
+		else
+		{
+			printf("some attribute\n");
+		}
+	}
+	else
+	{
+		//a query has all select, from, where
+		printf("a query has all select, from, where\n");
+		start = strstr(query, "SELECT") + 7;
+		end = strstr(query, "FROM") - 2;
+		if(!(start <= end))
+		{
+			printf("order wrong\n");
+			return 0;
+		}
+		fill_sql(select, start,end);
+		printf("%s\n",select );
+
+		start = strstr(query, "FROM") + 5;
+		end = strstr(query, "WHERE") - 2;
+		if(!(start <= end))
+		{	
+			printf("order wrong\n");
+			return 0;
+		}
+		fill_sql(from, start,end);
+		printf("%s\n",from);
+
+		start = strstr(query, "WHERE") + 6;
+		end = strstr(query, ";") - 1;
+		if(!(start <= end))
+		{	
+			printf("order wrong\n");
+			return 0;
+		}
+		fill_sql(where, start,end);
+		printf("%s\n",where);
+
+
+		printf("let's analyze(1,1,1)\n");
+		/*
+		two types:
+		(1) in a table(no join)
+		(2) in two table(join)
+		*/
+	}
 
 	return 0;
 }
@@ -410,10 +537,10 @@ void hashing_isbn(HashTable_isbn *h, EntryBook *entries, int entry_number)
 	int i;
 	for(i = 0; i < entry_number; i++)
 	{	
-		printf("%s-----",entries[i].isbn );
+		//printf("%s-----",entries[i].isbn );
 		//do hash
 		int hash_result = hash_function(entries[i].isbn);
-		printf("hash result is %d\n",hash_result );
+		//printf("hash result is %d\n",hash_result );
 		if(h -> buckets[hash_result] == NULL)
 		{	
 			
@@ -443,10 +570,10 @@ void hashing_author(HashTable_author *h, EntryBook *entries, int entry_number)
 	int i;
 	for(i = 0; i < entry_number; i++)
 	{	
-		printf("%s-----",entries[i].author );
+		//printf("%s-----",entries[i].author );
 		//do hash
 		int hash_result = hash_function(entries[i].author);
-		printf("hash result is %d\n",hash_result );
+		//printf("hash result is %d\n",hash_result );
 		if(h -> buckets[hash_result] == NULL)
 		{	
 			
@@ -476,10 +603,10 @@ void hashing_title(HashTable_title *h, EntryBook *entries, int entry_number)
 	int i;
 	for(i = 0; i < entry_number; i++)
 	{	
-		printf("%s-----",entries[i].title);
+		//printf("%s-----",entries[i].title);
 		//do hash
 		int hash_result = hash_function(entries[i].title);
-		printf("hash result is %d\n",hash_result );
+		//printf("hash result is %d\n",hash_result );
 		if(h -> buckets[hash_result] == NULL)
 		{	
 			
@@ -509,10 +636,10 @@ void hashing_price(HashTable_price *h, EntryBook *entries, int entry_number)
 	int i;
 	for(i = 0; i < entry_number; i++)
 	{	
-		printf("%s-----",entries[i].price);
+		//printf("%s-----",entries[i].price);
 		//do hash
 		int hash_result = hash_function(entries[i].price);
-		printf("hash result is %d\n",hash_result );
+		//printf("hash result is %d\n",hash_result );
 		if(h -> buckets[hash_result] == NULL)
 		{	
 			
@@ -542,10 +669,10 @@ void hashing_subject(HashTable_subject *h, EntryBook *entries, int entry_number)
 	int i;
 	for(i = 0; i < entry_number; i++)
 	{	
-		printf("%s-----",entries[i].subject);
+		//printf("%s-----",entries[i].subject);
 		//do hash
 		int hash_result = hash_function(entries[i].subject);
-		printf("hash result is %d\n",hash_result );
+		//printf("hash result is %d\n",hash_result );
 		if(h -> buckets[hash_result] == NULL)
 		{	
 			
@@ -575,10 +702,10 @@ void hashing_uid(HashTable_uid *h, EntrySellRecord *entries, int entry_number)
 	int i;
 	for(i = 0; i < entry_number; i++)
 	{	
-		printf("%s-----",entries[i].uid);
+		//printf("%s-----",entries[i].uid);
 		//do hash
 		int hash_result = hash_function(entries[i].uid);
-		printf("hash result is %d\n",hash_result );
+		//printf("hash result is %d\n",hash_result );
 		if(h -> buckets[hash_result] == NULL)
 		{	
 			
@@ -608,10 +735,10 @@ void hashing_no(HashTable_no *h, EntrySellRecord *entries, int entry_number)
 	int i;
 	for(i = 0; i < entry_number; i++)
 	{	
-		printf("%s-----",entries[i].no);
+		//printf("%s-----",entries[i].no);
 		//do hash
 		int hash_result = hash_function(entries[i].no);
-		printf("hash result is %d\n",hash_result );
+		//printf("hash result is %d\n",hash_result );
 		if(h -> buckets[hash_result] == NULL)
 		{	
 			
@@ -641,10 +768,10 @@ void hashing_isbn_no(HashTable_isbn_no *h, EntrySellRecord *entries, int entry_n
 	int i;
 	for(i = 0; i < entry_number; i++)
 	{	
-		printf("%s-----",entries[i].isbn_no);
+		//printf("%s-----",entries[i].isbn_no);
 		//do hash
 		int hash_result = hash_function(entries[i].isbn_no);
-		printf("hash result is %d\n",hash_result );
+		//printf("hash result is %d\n",hash_result );
 		if(h -> buckets[hash_result] == NULL)
 		{	
 			
@@ -667,4 +794,18 @@ void hashing_isbn_no(HashTable_isbn_no *h, EntrySellRecord *entries, int entry_n
 		} 
 	}
 	return;
+}
+
+//parse SQL
+void fill_sql(char *target, char *start, char *end)
+{
+	int i = 0;
+	while(start <= end)
+	{
+		
+		target[i] = *start;
+		start++;
+		i++;
+	}
+	target[i] = '\0';
 }
