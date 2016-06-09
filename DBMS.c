@@ -418,10 +418,10 @@ int  main(int argc, char const *argv[])
 					if(strcmp(from, "books") == 0)  
 					{
 						printf("print all book.txt\n" );
-						printf("%-15s%-40s%-60s%-8s%-10s\n", "isbn", "author", "title", "price", "subject");
+						printf("%-15s%-30s%-65s%-8s%-10s\n", "isbn", "author", "title", "price", "subject");
 						int i;
 						for(i = 0; i < fp1lines - 1; i++)
-							printf("%-15s%-40s%-60s%-8s%-10s\n", allEntryBook[i].isbn, allEntryBook[i].author, allEntryBook[i].title, allEntryBook[i].price, allEntryBook[i].subject);
+							printf("%-15s%-30s%-65s%-8s%-10s\n", allEntryBook[i].isbn, allEntryBook[i].author, allEntryBook[i].title, allEntryBook[i].price, allEntryBook[i].subject);
 
 
 					}
@@ -630,12 +630,187 @@ int  main(int argc, char const *argv[])
 			else
 			{
 				printf("a table with some attribute\n");
+				if(strcmp(from, "books") == 0)
+				{
+					bool include[5] = {0, 0, 0, 0, 0};
+					printf("%s\n", select);
+					char *split;
+					bool invalid = 0;
+					split = strtok(select, ",");
+					while (split != NULL)
+					{
+						printf("%s\n",split );
+						if(strcmp(split, "isbn") == 0)
+							include[0] = 1;
+						else if(strcmp(split, "author") == 0)
+							include[1] = 1;
+						else if(strcmp(split, "title") == 0)
+							include[2] = 1;
+						else if(strcmp(split, "price") == 0)
+							include[3] = 1;
+						else if(strcmp(split, "subject") == 0)
+							include[4] = 1;
+						else
+						{
+							printf("no such attribute\n");
+							invalid = 1;
+							break;
+						}
+						split = strtok (NULL, ",");
+					} 
+					if(invalid)
+						continue;
+					else
+					{
+						int i;
+						
+						for(i = 0; i < 5; i++)
+						{
+							if(include[i])
+							{	
+								switch(i)
+								{
+									case 0:
+										printf("%-15s","isbn" );
+										break;
+									case 1:
+										printf("%-30s","author" );
+										break;
+									case 2:
+										printf("%-65s","title" );
+										break;
+									case 3:
+										printf("%-8s","price" );
+										break;
+									case 4:
+										printf("%-10s","subject");
+										break;
+
+								}
+
+							}
+						}
+						printf("\n");
+						for(i = 0 ;i < fp1lines - 1;i++)
+						{
+							int j;
+							for(j = 0; j < 5; j++)
+							{
+								if(include[j])
+								{	
+									switch(j)
+									{
+										case 0:
+											printf("%-15s",allEntryBook[i].isbn );
+											break;
+										case 1:
+											printf("%-30s",allEntryBook[i].author );
+											break;
+										case 2:
+											printf("%-65s",allEntryBook[i].title );
+											break;
+										case 3:
+											printf("%-8s",allEntryBook[i].price );
+											break;
+										case 4:
+											printf("%-10s",allEntryBook[i].subject);
+											break;
+									}
+								}
+							}
+							printf("\n");
+						}
+						
+					}
+				}
+				else if(strcmp(from, "sellRecord") == 0)
+				{
+					bool include[3] = {0, 0, 0};
+					printf("%s\n", select);
+					char *split;
+					bool invalid = 0;
+					split = strtok(select, ",");
+					while (split != NULL)
+					{
+						printf("%s\n",split );
+						if(strcmp(split, "uid") == 0)
+							include[0] = 1;
+						else if(strcmp(split, "no") == 0)
+							include[1] = 1;
+						else if(strcmp(split, "isbn_no") == 0)
+							include[2] = 1;
+						else
+						{
+							printf("no such attribute\n");
+							invalid = 1;
+							break;
+						}
+						split = strtok (NULL, ",");
+					} 
+					if(invalid)
+						continue;
+					else
+					{
+						int i;
+						for(i = 0; i < 3; i++)
+						{
+							if(include[i])
+							{	
+								switch(i)
+								{
+									case 0:
+										printf("%-5s","uid" );
+										break;
+									case 1:
+										printf("%-5s","no" );
+										break;
+									case 2:
+										printf("%-15s","isbn_no" );
+										break;
+								}
+
+							}
+						}
+						printf("\n");
+						for(i = 0 ;i < fp2lines - 1;i++)
+						{
+							int j;
+							for(j = 0; j < 3; j++)
+							{
+								if(include[j])
+								{	
+									switch(j)
+									{
+										case 0:
+											printf("%-5s",allEntrySellRecord[i].uid );
+											break;
+										case 1:
+											printf("%-5s",allEntrySellRecord[i].no );
+											break;
+										case 2:
+											printf("%-15s",allEntrySellRecord[i].isbn_no );
+											break;
+										
+									}
+								}
+							}
+							printf("\n");
+						}
+						
+					}
+				}
+				else
+				{
+					printf("no such table\n");
+					continue;
+				}
 			}
 		}
 		else
 		{
 			//a query has all select, from, where
 			printf("a query has all select, from, where\n");
+
 			start = strstr(query, "SELECT") + 7;
 			end = strstr(query, "FROM") - 2;
 			if(!(start <= end))
@@ -665,7 +840,8 @@ int  main(int argc, char const *argv[])
 			}
 			fill_sql(where, start,end);
 			printf("%s\n",where);
-
+			if(strstr(where, "=") == NULL || strstr(where, "'") == NULL )
+				continue;
 
 			printf("let's analyze(1,1,1)\n");
 			/*
@@ -673,6 +849,457 @@ int  main(int argc, char const *argv[])
 			(1) in a table(no join)
 			(2) in two table(join)
 			*/
+			if(strstr(from, ",") == NULL)
+			{
+				printf("not join\n");
+				if(strcmp(from, "books") == 0)
+				{
+					bool include[5] = {0, 0, 0, 0, 0};
+					printf("%s\n", select);
+					char *split;
+					bool invalid = 0;
+					split = strtok(select, ",");
+					while (split != NULL)
+					{
+						printf("%s\n",split );
+						if(strcmp(split, "isbn") == 0)
+							include[0] = 1;
+						else if(strcmp(split, "author") == 0)
+							include[1] = 1;
+						else if(strcmp(split, "title") == 0)
+							include[2] = 1;
+						else if(strcmp(split, "price") == 0)
+							include[3] = 1;
+						else if(strcmp(split, "subject") == 0)
+							include[4] = 1;
+						else
+						{
+							printf("no such attribute\n");
+							invalid = 1;
+							break;
+						}
+						split = strtok (NULL, ",");
+					} 
+					if(invalid)
+						continue;
+					else
+					{
+						int i;
+						for(i = 0; i < 5; i++)	//print header
+						{
+							if(include[i])
+							{	
+								switch(i)
+								{
+									case 0:
+										printf("%-15s","isbn" );
+										break;
+									case 1:
+										printf("%-30s","author" );
+										break;
+									case 2:
+										printf("%-65s","title" );
+										break;
+									case 3:
+										printf("%-8s","price" );
+										break;
+									case 4:
+										printf("%-10s","subject");
+										break;
+
+								}
+
+							}
+						}
+						printf("\n");
+						//process conditions:
+						i = 0;
+						char conditions[5][100];
+						printf("process condition\n");
+						if(strstr(where, "AND") != 0)
+						{	
+							
+							char *temp = str_duplicate(where);
+							while(strstr(temp, "AND") != 0)
+							{
+								start = temp;
+								end = strstr(temp, "AND") - 2;
+								fill_sql(conditions[i], start, end);
+
+								temp = end + 6;
+								i++;
+							}
+							//fill_sql(conditions[i], temp, strstr(temp, "\0") - 1);
+							char *x = temp;
+							int y = 0;
+							while(*x != '\0')
+							{
+								conditions[i][y] = *x;
+								x++;
+								y++;
+							}
+							conditions[i][y] = '\0';
+							i++;
+						}
+						else
+						{
+							fill_sql(conditions[i], where, where + strlen(where) );
+							i++;
+						}		
+						int condition_numbers = i;
+						printf("condition number is %d\n",condition_numbers );
+						if(condition_numbers > 4)
+							continue;
+
+						int use_entry_id[fp1lines -1];		//an array to indicate which entry need to be inclued by hash table
+						for(i =0 ;i < fp1lines -1 ;i++)
+							use_entry_id[i] = 0;
+
+						printf("process every conditions\n");
+						for(i =0;i < condition_numbers ;i++)
+						{	
+							printf("%s\n",conditions[i] );
+							char where_attribute[100];
+							char where_condition[100];
+							printf("condition[i] is %s\n", conditions[i]);
+							start = conditions[i];
+							end = strstr(conditions[i], "=") - 1;
+							fill_sql(where_attribute, start, end);
+
+							start = strstr(conditions[i], "=") + 2;
+							char *find;
+							for(find = conditions[i] + strlen(conditions[i]) ; ;find --)
+							{
+								if(*find == '\'')
+								{	
+									end = find - 1;
+									break;
+								}
+							}
+							fill_sql(where_condition, start, end);
+							
+							printf("(%s)...(%s)\n",where_attribute, where_condition );
+							
+							if(strcmp(where_attribute, "isbn") == 0 )
+							{
+								//printf("look up hash isbn\n");
+								int lookup = hash_function(where_condition);
+								Slot_Book *travel = allIsbn.buckets[lookup];
+								while(travel != NULL)
+								{
+									//printf("data is %s, form entey %d\n",travel -> data, travel -> EntryBook_id );
+									if(strcmp(travel -> data, where_condition) == 0)
+										use_entry_id[travel -> EntryBook_id] ++;
+									travel = travel -> next;
+								}
+							}
+							else if(strcmp(where_attribute, "author") == 0 )
+							{
+								//printf("look up hash author\n");
+								int lookup = hash_function(where_condition);
+								Slot_Book *travel = allAuthor.buckets[lookup];
+								while(travel != NULL)
+								{
+									//printf("data is %s, form entey %d\n",travel -> data, travel -> EntryBook_id );
+									if(strcmp(travel -> data, where_condition) == 0)
+										use_entry_id[travel -> EntryBook_id] ++;
+									travel = travel -> next;
+								}
+							}
+							else if(strcmp(where_attribute, "title") == 0 )
+							{
+								//printf("look up hash title\n");
+								int lookup = hash_function(where_condition);
+								Slot_Book *travel = allTitle.buckets[lookup];
+								while(travel != NULL)
+								{
+									//printf("data is %s, form entey %d\n",travel -> data, travel -> EntryBook_id );
+									if(strcmp(travel -> data, where_condition) == 0)
+										use_entry_id[travel -> EntryBook_id] ++;
+									travel = travel -> next;
+								}
+							}
+							else if(strcmp(where_attribute, "price") == 0 )
+							{
+								//printf("look up hash price\n");
+								int lookup = hash_function(where_condition);
+								Slot_Book *travel = allPrice.buckets[lookup];
+								while(travel != NULL)
+								{
+									//printf("data is %s, form entey %d\n",travel -> data, travel -> EntryBook_id );
+									if(strcmp(travel -> data, where_condition) == 0)
+										use_entry_id[travel -> EntryBook_id] ++;
+									travel = travel -> next;
+								}
+							}
+							else if(strcmp(where_attribute, "subject") == 0 )
+							{
+								//printf("look up hash subject\n");
+								int lookup = hash_function(where_condition);
+								Slot_Book *travel = allSubject.buckets[lookup];
+								while(travel != NULL)
+								{
+									//printf("data is %s, form entey %d\n",travel -> data, travel -> EntryBook_id );
+									if(strcmp(travel -> data, where_condition) == 0)
+										use_entry_id[travel -> EntryBook_id] ++;
+									travel = travel -> next;
+								}
+							}
+							else
+							{
+								printf("no this attribute\n");
+								invalid = 1;
+								break;
+							}
+						}
+
+						if(invalid)
+							continue;
+						//output:
+						printf("\n");
+						for(i = 0 ;i < fp1lines - 1;i++)
+						{
+							if(use_entry_id[i] == condition_numbers)
+							{	
+								int j;
+								for(j = 0; j < 5; j++)
+								{
+									if(include[j])
+									{	
+										switch(j)
+										{
+											case 0:
+												printf("%-15s",allEntryBook[i].isbn );
+												break;
+											case 1:
+												printf("%-30s",allEntryBook[i].author );
+												break;
+											case 2:
+												printf("%-65s",allEntryBook[i].title );
+												break;
+											case 3:
+												printf("%-8s",allEntryBook[i].price );
+												break;
+											case 4:
+												printf("%-10s",allEntryBook[i].subject);
+												break;
+										}
+									}
+								}
+								printf("\n");
+							}
+						}
+					}
+				}
+				else if(strcmp(from, "sellRecord") == 0)
+				{
+					bool include[3] = {0, 0, 0};
+					printf("%s\n", select);
+					char *split;
+					bool invalid = 0;
+					split = strtok(select, ",");
+					while (split != NULL)
+					{
+						printf("%s\n",split );
+						if(strcmp(split, "uid") == 0)
+							include[0] = 1;
+						else if(strcmp(split, "no") == 0)
+							include[1] = 1;
+						else if(strcmp(split, "isbn_no") == 0)
+							include[2] = 1;
+						else
+						{
+							printf("no such attribute\n");
+							invalid = 1;
+							break;
+						}
+						split = strtok (NULL, ",");
+					} 
+					if(invalid)
+						continue;
+					else
+					{
+						int i;
+						for(i = 0; i < 3; i++)	//print header
+						{
+							if(include[i])
+							{	
+								switch(i)
+								{
+									case 0:
+										printf("%-5s","uid" );
+										break;
+									case 1:
+										printf("%-5s","no" );
+										break;
+									case 2:
+										printf("%-15s","isbn_no" );
+										break;
+
+								}
+
+							}
+						}
+						printf("\n");
+						//process conditions:
+						i = 0;
+						char conditions[5][100];
+						printf("process condition\n");
+						if(strstr(where, "AND") != 0)
+						{	
+							
+							char *temp = str_duplicate(where);
+							while(strstr(temp, "AND") != 0)
+							{
+								start = temp;
+								end = strstr(temp, "AND") - 2;
+								fill_sql(conditions[i], start, end);
+
+								temp = end + 6;
+								i++;
+							}
+							//this is remainder, doesn't have "AND"
+							char *x = temp;
+							int y = 0;
+							while(*x != '\0')
+							{
+								conditions[i][y] = *x;
+								x++;
+								y++;
+							}
+							conditions[i][y] = '\0';
+							i++;
+						}
+						else			//don't have AND, just a condition
+						{
+							fill_sql(conditions[i], where, where + strlen(where) );
+							i++;
+						}		
+						int condition_numbers = i;
+						printf("condition number is %d\n",condition_numbers );
+						if(condition_numbers > 4)
+							continue;
+
+						int use_entry_id[fp2lines -1];		//an array to indicate which entry need to be inclued by hash table
+						for(i =0 ;i < fp2lines -1 ;i++)
+							use_entry_id[i] = 0;
+
+						printf("process every conditions\n");
+						for(i =0;i < condition_numbers ;i++)
+						{	
+							printf("%s\n",conditions[i] );
+							char where_attribute[100];
+							char where_condition[100];
+							printf("condition[i] is %s\n", conditions[i]);
+							start = conditions[i];
+							end = strstr(conditions[i], "=") - 1;
+							fill_sql(where_attribute, start, end);
+
+							start = strstr(conditions[i], "=") + 2;
+							char *find;
+							for(find = conditions[i] + strlen(conditions[i]) ; ;find --)
+							{
+								if(*find == '\'')
+								{	
+									end = find - 1;
+									break;
+								}
+							}
+							fill_sql(where_condition, start, end);
+							
+							printf("(%s)...(%s)\n",where_attribute, where_condition );
+							
+							if(strcmp(where_attribute, "uid") == 0 )
+							{
+								
+								int lookup = hash_function(where_condition);
+								Slot_sellRecord *travel = allUid.buckets[lookup];
+								while(travel != NULL)
+								{
+									
+									if(strcmp(travel -> data, where_condition) == 0)
+										use_entry_id[travel -> EntrySellRecord_id] ++;
+									travel = travel -> next;
+								}
+							}
+							else if(strcmp(where_attribute, "no") == 0 )
+							{
+								
+								int lookup = hash_function(where_condition);
+								Slot_sellRecord *travel = allNo.buckets[lookup];
+								while(travel != NULL)
+								{
+									
+									if(strcmp(travel -> data, where_condition) == 0)
+										use_entry_id[travel ->  EntrySellRecord_id] ++;
+									travel = travel -> next;
+								}
+							}
+							else if(strcmp(where_attribute, "isbn_no") == 0 )
+							{
+								
+								int lookup = hash_function(where_condition);
+								Slot_sellRecord *travel = allIsbn_No.buckets[lookup];
+								while(travel != NULL)
+								{
+									
+									if(strcmp(travel -> data, where_condition) == 0)
+										use_entry_id[travel -> EntrySellRecord_id] ++;
+									travel = travel -> next;
+								}
+							}
+							else
+							{
+								printf("no this attribute\n");
+								invalid = 1;
+								break;
+							}
+						}
+
+						if(invalid)
+							continue;
+						//output:
+						printf("\n");
+						for(i = 0 ;i < fp2lines - 1;i++)
+						{
+							if(use_entry_id[i] == condition_numbers)
+							{	
+								int j;
+								for(j = 0; j < 3; j++)
+								{
+									if(include[j])
+									{	
+										switch(j)
+										{
+											case 0:
+												printf("%-5s",allEntrySellRecord[i].uid );
+												break;
+											case 1:
+												printf("%-5s",allEntrySellRecord[i].no );
+												break;
+											case 2:
+												printf("%-15s",allEntrySellRecord[i].isbn_no );
+												break;
+											
+										}
+									}
+								}
+								printf("\n");
+							}
+						}
+					}
+				}
+				else
+				{
+					printf("no such table\n");
+					continue;
+				}
+			}
+			else
+			{
+				printf("need to join\n");
+				//join
+			}
 		}
 	}
 	return 0;
