@@ -68,12 +68,13 @@ typedef struct
 	Slot_sellRecord *buckets[10];
 }HashTable_isbn_no;
 
-int countlines(FILE *fp);			//know how many entries
+int countlines(FILE *fp);				//know how many entries
 char *str_duplicate(const char *s);	//write data to struct of entries
 
 //link list
 Slot_Book *create_book_node();
 Slot_sellRecord *create_sell_node();
+
 //do hashing
 int hash_function(char *key);
 void hashing_isbn(HashTable_isbn *h, EntryBook *entries, int num);
@@ -84,6 +85,7 @@ void hashing_subject(HashTable_subject *h, EntryBook *entries, int num);
 void hashing_uid(HashTable_uid *h, EntrySellRecord *entries, int num);
 void hashing_no(HashTable_no *h, EntrySellRecord *entries, int num);
 void hashing_isbn_no(HashTable_isbn_no *h, EntrySellRecord *entries, int num);
+
 //parse SQL
 void fill_sql(char *target, char *start, char *end);
 int  main(int argc, char const *argv[])
@@ -95,9 +97,7 @@ int  main(int argc, char const *argv[])
 	
 	//count how many lines and know how many entrys
 	int fp1lines = countlines(fp1);
-	//printf("file1 has %d lines\n",fp1lines );
 	int fp2lines = countlines(fp2);
-	//printf("file2 has %d lines\n",fp2lines );
 	EntryBook allEntryBook[fp1lines - 1];
 	EntrySellRecord allEntrySellRecord[fp2lines - 1];
 
@@ -107,259 +107,253 @@ int  main(int argc, char const *argv[])
 
 	//process file 1: books.txt
 	char line[256];
-	int i = 0;	//use to remove first line, i control the lines
+	int i = 0;				//use to remove first line, i control the lines
 	char *strings[5];
-	printf("use allEntryBook\n");
-	int fill = 0;	//fill control pos to fill for allEntryBook
+	
+	int fill = 0;			//fill control pos to fill for allEntryBook
 	while (fgets(line, sizeof(line), fp1)) 
 	{
-	       	/* note that fgets don't strip the terminating \n, checking its
-	           	presence would allow to handle lines longer that sizeof(line) */
-		int j = 0;		//j controls strings[5]
+
+		int j = 0;			//j controls strings[5]
 		if (i == 0)
 		{
 			i++;
 			continue;
 		}
 		/*turn '\n' to null char*/
-	        	int t = 0;
-	        	while(line[t] != 13)
-	        		t++;
-	        	line[t] = '\0';
-	        	/*split string by '|' and has 5 attributes*/
-	        	char *split;
-	        	split = strtok(line, "|");
-  		while (split != NULL)
-  		{
-    			strings[j] = split;
-    			j++;
-    			split = strtok (NULL, "|");
+		int t = 0;
+		while(line[t] != 13)
+			t++;
+		line[t] = '\0';
+	        /*split string by '|' and has 5 attributes*/
+		char *split;
+		split = strtok(line, "|");
+		while (split != NULL)
+		{
+			strings[j] = split;
+			j++;
+			split = strtok (NULL, "|");
 
-  		} 
-  		allEntryBook[fill].isbn = str_duplicate(strings[0]);
-  		allEntryBook[fill].author = str_duplicate(strings[1]);
-  		allEntryBook[fill].title = str_duplicate(strings[2]);
-  		allEntryBook[fill].price = str_duplicate(strings[3]);
-  		allEntryBook[fill].subject = str_duplicate(strings[4]);
-  		fill++;
-    	}
-    	
-    	
+		} 
+		allEntryBook[fill].isbn = str_duplicate(strings[0]);
+		allEntryBook[fill].author = str_duplicate(strings[1]);
+		allEntryBook[fill].title = str_duplicate(strings[2]);
+		allEntryBook[fill].price = str_duplicate(strings[3]);
+		allEntryBook[fill].subject = str_duplicate(strings[4]);
+		fill++;
+	}
+
+
     	//process file 2: sellRecord.txt
-    	i = 0;	//use to remove first line, i control the lines
-
-	fill = 0;	//fill control pos to fill for allSellRecord
+    	i = 0;				//use to remove first line, i control the lines
+	fill = 0;				//fill control pos to fill for allSellRecord
 	while (fgets(line, sizeof(line), fp2)) 
 	{
-	       	/* note that fgets don't strip the terminating \n, checking its
-	           	presence would allow to handle lines longer that sizeof(line) */
-		int j = 0;		//j controls strings to [0]~[2]
+
+		int j = 0;			//j controls strings to [0]~[2]
 		if (i == 0)
 		{
 			i++;
 			continue;
 		}
 		/*turn '\n' to null char*/
-	        	int t = 0;
-	        	while(line[t] != 13)
-	        		t++;
-	        	line[t] = '\0';
-	        	/*split string by '|' and has 3 attributes*/
-	        	char *split;
-	        	split = strtok(line, "|");
-  		while (split != NULL)
-  		{
-    			strings[j] = split;
-    			j++;
-    			split = strtok (NULL, "|");
+		int t = 0;
+		while(line[t] != 13)
+			t++;
+		line[t] = '\0';
+	        /*split string by '|' and has 3 attributes*/
+		char *split;
+		split = strtok(line, "|");
+		while (split != NULL)
+		{
+			strings[j] = split;
+			j++;
+			split = strtok (NULL, "|");
 
-  		} 
-  		allEntrySellRecord[fill].uid = str_duplicate(strings[0]);
-  		allEntrySellRecord[fill].no = str_duplicate(strings[1]);
-  		allEntrySellRecord[fill].isbn_no = str_duplicate(strings[2]);
-  		fill++;
-    	}
-
-
-    	fclose(fp1);
-    	fclose(fp2);
+		} 
+		allEntrySellRecord[fill].uid = str_duplicate(strings[0]);
+		allEntrySellRecord[fill].no = str_duplicate(strings[1]);
+		allEntrySellRecord[fill].isbn_no = str_duplicate(strings[2]);
+		fill++;
+	}
+	fclose(fp1);
+	fclose(fp2);
 
 
     	//build 8 hash table and write them to files
     	//1.
-    	HashTable_isbn allIsbn;
-    	for(i = 0; i < 10; i++)
-    		allIsbn.buckets[i] = NULL;
-    	hashing_isbn(&allIsbn, allEntryBook, fp1lines - 1);
+	HashTable_isbn allIsbn;
+	for(i = 0; i < 10; i++)
+		allIsbn.buckets[i] = NULL;
+	hashing_isbn(&allIsbn, allEntryBook, fp1lines - 1);
     	//write to file:
-    	FILE *write_isbn;
-    	write_isbn = fopen("HashTable_isbn.txt", "w");
-    	for(i = 0;i < 10; i++)
-    	{
-    		fprintf(write_isbn, "Bucket %d   ",i );
-    		Slot_Book *ptr = allIsbn.buckets[i];
-    		while(ptr != NULL)
-    		{
-    			fprintf(write_isbn, "%s(%d), ", ptr -> data, ptr -> EntryBook_id);
-    			ptr = ptr -> next;
-    		}
-    		fprintf(write_isbn, "\n");
-    	}
-    	fclose(write_isbn);
+	FILE *write_isbn;
+	write_isbn = fopen("HashTable_isbn.txt", "w");
+	for(i = 0;i < 10; i++)
+	{
+		fprintf(write_isbn, "Bucket %d   ",i );
+		Slot_Book *ptr = allIsbn.buckets[i];
+		while(ptr != NULL)
+		{
+			fprintf(write_isbn, "%s(%d), ", ptr -> data, ptr -> EntryBook_id);
+			ptr = ptr -> next;
+		}
+		fprintf(write_isbn, "\n");
+	}
+	fclose(write_isbn);
     	//2.
-    	HashTable_author allAuthor;
-    	for(i = 0; i < 10; i++)
-    		allAuthor.buckets[i] = NULL;
-    	hashing_author(&allAuthor, allEntryBook, fp1lines - 1);
+	HashTable_author allAuthor;
+	for(i = 0; i < 10; i++)
+		allAuthor.buckets[i] = NULL;
+	hashing_author(&allAuthor, allEntryBook, fp1lines - 1);
     	//write to file:
-    	FILE *write_author;
-    	write_author = fopen("HashTable_author.txt", "w");
-    	for(i = 0;i < 10; i++)
-    	{
-    		fprintf(write_author, "Bucket %d   ",i );
-    		Slot_Book *ptr = allAuthor.buckets[i];
-    		while(ptr != NULL)
-    		{
-    			fprintf(write_author, "%s(%d), ", ptr -> data, ptr -> EntryBook_id);
-    			ptr = ptr -> next;
-    		}
-    		fprintf(write_author, "\n");
-    	}
-    	fclose(write_author);
+	FILE *write_author;
+	write_author = fopen("HashTable_author.txt", "w");
+	for(i = 0;i < 10; i++)
+	{
+		fprintf(write_author, "Bucket %d   ",i );
+		Slot_Book *ptr = allAuthor.buckets[i];
+		while(ptr != NULL)
+		{
+			fprintf(write_author, "%s(%d), ", ptr -> data, ptr -> EntryBook_id);
+			ptr = ptr -> next;
+		}
+		fprintf(write_author, "\n");
+	}
+	fclose(write_author);
     	//3.
-    	HashTable_title allTitle;
-    	for(i = 0; i < 10; i++)
-    		allTitle.buckets[i] = NULL;
-    	hashing_title(&allTitle, allEntryBook, fp1lines - 1);
+	HashTable_title allTitle;
+	for(i = 0; i < 10; i++)
+		allTitle.buckets[i] = NULL;
+	hashing_title(&allTitle, allEntryBook, fp1lines - 1);
     	//write to file:
-    	FILE *write_title;
-    	write_title = fopen("HashTable_title.txt", "w");
-    	for(i = 0;i < 10; i++)
-    	{
-    		fprintf(write_title, "Bucket %d   ",i );
-    		Slot_Book *ptr = allTitle.buckets[i];
-    		while(ptr != NULL)
-    		{
-    			fprintf(write_title, "%s(%d), ", ptr -> data, ptr -> EntryBook_id);
-    			ptr = ptr -> next;
-    		}
-    		fprintf(write_title, "\n");
-    	}
-    	fclose(write_title);
+	FILE *write_title;
+	write_title = fopen("HashTable_title.txt", "w");
+	for(i = 0;i < 10; i++)
+	{
+		fprintf(write_title, "Bucket %d   ",i );
+		Slot_Book *ptr = allTitle.buckets[i];
+		while(ptr != NULL)
+		{
+			fprintf(write_title, "%s(%d), ", ptr -> data, ptr -> EntryBook_id);
+			ptr = ptr -> next;
+		}
+		fprintf(write_title, "\n");
+	}
+	fclose(write_title);
     	//4.
-    	HashTable_price allPrice;
-    	for(i = 0; i < 10; i++)
-    		allPrice.buckets[i] = NULL;
-    	hashing_price(&allPrice, allEntryBook, fp1lines - 1);
+	HashTable_price allPrice;
+	for(i = 0; i < 10; i++)
+		allPrice.buckets[i] = NULL;
+	hashing_price(&allPrice, allEntryBook, fp1lines - 1);
     	//write to file:
-    	FILE *write_price;
-    	write_price = fopen("HashTable_price.txt", "w");
-    	for(i = 0;i < 10; i++)
-    	{
-    		fprintf(write_price, "Bucket %d   ",i );
-    		Slot_Book *ptr = allPrice.buckets[i];
-    		while(ptr != NULL)
-    		{
-    			fprintf(write_price, "%s(%d), ", ptr -> data, ptr -> EntryBook_id);
-    			ptr = ptr -> next;
-    		}
-    		fprintf(write_price, "\n");
-    	}
-    	fclose(write_price);
+	FILE *write_price;
+	write_price = fopen("HashTable_price.txt", "w");
+	for(i = 0;i < 10; i++)
+	{
+		fprintf(write_price, "Bucket %d   ",i );
+		Slot_Book *ptr = allPrice.buckets[i];
+		while(ptr != NULL)
+		{
+			fprintf(write_price, "%s(%d), ", ptr -> data, ptr -> EntryBook_id);
+			ptr = ptr -> next;
+		}
+		fprintf(write_price, "\n");
+	}
+	fclose(write_price);
     	//5.
-    	HashTable_subject allSubject;
-    	for(i = 0; i < 10; i++)
-    		allSubject.buckets[i] = NULL;
-    	hashing_subject(&allSubject, allEntryBook, fp1lines - 1);
+	HashTable_subject allSubject;
+	for(i = 0; i < 10; i++)
+		allSubject.buckets[i] = NULL;
+	hashing_subject(&allSubject, allEntryBook, fp1lines - 1);
     	//write to file:
-    	FILE *write_subject;
-    	write_subject = fopen("HashTable_subject.txt", "w");
-    	for(i = 0;i < 10; i++)
-    	{
-    		fprintf(write_subject, "Bucket %d   ",i );
-    		Slot_Book *ptr = allSubject.buckets[i];
-    		while(ptr != NULL)
-    		{
-    			fprintf(write_subject, "%s(%d), ", ptr -> data, ptr -> EntryBook_id);
-    			ptr = ptr -> next;
-    		}
-    		fprintf(write_subject, "\n");
-    	}
-    	fclose(write_subject);
+	FILE *write_subject;
+	write_subject = fopen("HashTable_subject.txt", "w");
+	for(i = 0;i < 10; i++)
+	{
+		fprintf(write_subject, "Bucket %d   ",i );
+		Slot_Book *ptr = allSubject.buckets[i];
+		while(ptr != NULL)
+		{
+			fprintf(write_subject, "%s(%d), ", ptr -> data, ptr -> EntryBook_id);
+			ptr = ptr -> next;
+		}
+		fprintf(write_subject, "\n");
+	}
+	fclose(write_subject);
     	//6.
-    	HashTable_uid allUid;
-    	for(i = 0; i < 10; i++)
-    		allUid.buckets[i] = NULL;
-    	hashing_uid(&allUid, allEntrySellRecord, fp2lines - 1);
+	HashTable_uid allUid;
+	for(i = 0; i < 10; i++)
+		allUid.buckets[i] = NULL;
+	hashing_uid(&allUid, allEntrySellRecord, fp2lines - 1);
     	//write to file:
-    	FILE *write_uid;
-    	write_uid = fopen("HashTable_uid.txt", "w");
-    	for(i = 0;i < 10; i++)
-    	{
-    		fprintf(write_uid, "Bucket %d   ",i );
-    		Slot_sellRecord *ptr = allUid.buckets[i];
-    		while(ptr != NULL)
-    		{
-    			fprintf(write_uid, "%s(%d), ", ptr -> data, ptr -> EntrySellRecord_id);
-    			ptr = ptr -> next;
-    		}
-    		fprintf(write_uid, "\n");
-    	}
-    	fclose(write_uid);
+	FILE *write_uid;
+	write_uid = fopen("HashTable_uid.txt", "w");
+	for(i = 0;i < 10; i++)
+	{
+		fprintf(write_uid, "Bucket %d   ",i );
+		Slot_sellRecord *ptr = allUid.buckets[i];
+		while(ptr != NULL)
+		{
+			fprintf(write_uid, "%s(%d), ", ptr -> data, ptr -> EntrySellRecord_id);
+			ptr = ptr -> next;
+		}
+		fprintf(write_uid, "\n");
+	}
+	fclose(write_uid);
     	//7.
-    	HashTable_no allNo;
-    	for(i = 0; i < 10; i++)
-    		allNo.buckets[i] = NULL;
-    	hashing_no(&allNo, allEntrySellRecord, fp2lines - 1);
+	HashTable_no allNo;
+	for(i = 0; i < 10; i++)
+		allNo.buckets[i] = NULL;
+	hashing_no(&allNo, allEntrySellRecord, fp2lines - 1);
     	//write to file:
-    	FILE *write_no;
-    	write_no = fopen("HashTable_no.txt", "w");
-    	for(i = 0;i < 10; i++)
-    	{
-    		fprintf(write_no, "Bucket %d   ",i );
-    		Slot_sellRecord *ptr = allNo.buckets[i];
-    		while(ptr != NULL)
-    		{
-    			fprintf(write_no, "%s(%d), ", ptr -> data, ptr -> EntrySellRecord_id);
-    			ptr = ptr -> next;
-    		}
-    		fprintf(write_no, "\n");
-    	}
-    	fclose(write_no);
+	FILE *write_no;
+	write_no = fopen("HashTable_no.txt", "w");
+	for(i = 0;i < 10; i++)
+	{
+		fprintf(write_no, "Bucket %d   ",i );
+		Slot_sellRecord *ptr = allNo.buckets[i];
+		while(ptr != NULL)
+		{
+			fprintf(write_no, "%s(%d), ", ptr -> data, ptr -> EntrySellRecord_id);
+			ptr = ptr -> next;
+		}
+		fprintf(write_no, "\n");
+	}
+	fclose(write_no);
     	//8.
-    	HashTable_isbn_no allIsbn_No;
-    	for(i = 0; i < 10; i++)
-    		allIsbn_No.buckets[i] = NULL;
-    	hashing_isbn_no(&allIsbn_No, allEntrySellRecord, fp2lines - 1);
+	HashTable_isbn_no allIsbn_No;
+	for(i = 0; i < 10; i++)
+		allIsbn_No.buckets[i] = NULL;
+	hashing_isbn_no(&allIsbn_No, allEntrySellRecord, fp2lines - 1);
     	//write to file:
-    	FILE *write_isbn_no;
-    	write_isbn_no = fopen("HashTable_isbn_no.txt", "w");
-    	for(i = 0;i < 10; i++)
-    	{
-    		fprintf(write_isbn_no, "Bucket %d   ",i );
-    		Slot_sellRecord *ptr = allIsbn_No.buckets[i];
-    		while(ptr != NULL)
-    		{
-    			fprintf(write_isbn_no, "%s(%d), ", ptr -> data, ptr -> EntrySellRecord_id);
-    			ptr = ptr -> next;
-    		}
-    		fprintf(write_isbn_no, "\n");
-    	}
-    	fclose(write_isbn_no);
+	FILE *write_isbn_no;
+	write_isbn_no = fopen("HashTable_isbn_no.txt", "w");
+	for(i = 0;i < 10; i++)
+	{
+		fprintf(write_isbn_no, "Bucket %d   ",i );
+		Slot_sellRecord *ptr = allIsbn_No.buckets[i];
+		while(ptr != NULL)
+		{
+			fprintf(write_isbn_no, "%s(%d), ", ptr -> data, ptr -> EntrySellRecord_id);
+			ptr = ptr -> next;
+		}
+		fprintf(write_isbn_no, "\n");
+	}
+	fclose(write_isbn_no);
 	
-
-
 	//start to read query:
-    	char query[1000];
-	char select[100], from[100], where[100];
+	char query[1000];
+	char select[100], from[100], where[100];		//3 pars of SQL query, split to each of them
 	while(1)
 	{
-		char *start, *end;
+		char *start, *end;						//pointer to duplicate a string, given start and end
 		bool select_exist = 0, from_exist = 0, where_exist = 0, ending_exist = 0;
-		printf("input query:\n");
+
+		printf("\ninput query:\n");
 		fgets(query, 1000, stdin);
-		printf("%s\n",query );
-		if(strcmp(query, "exit\n") == 0)
+		//basic on keywords, have different types(SELECT, FROM, WHERE)
+		if(strcmp(query, "exit\n") == 0)			//exit program
 			break;
 		if(strstr(query, "SELECT ") != NULL)
 			select_exist = 1;
@@ -368,19 +362,19 @@ int  main(int argc, char const *argv[])
 		if(strstr(query, " WHERE ") != NULL)
 			where_exist = 1;
 		if(strstr(query, ";") != NULL)
-			ending_exist = 1;
+		ending_exist = 1;
 
-		printf("%d %d %d\n",select_exist,from_exist,where_exist );
+		
 		if(select_exist == 0 || from_exist == 0 || ending_exist == 0)
 		{
 			printf("SQL syntax error\n");
 			continue;
 		}
 		
+		//basic WHERE, define has condition/without condition
 		if(where_exist == 0)
 		{
 			//a query don't have condition
-			printf("a query don't have condition\n");
 			start = strstr(query, "SELECT") + 7;
 			end = strstr(query, "FROM") - 2;
 			if(!(start <= end))
@@ -388,9 +382,8 @@ int  main(int argc, char const *argv[])
 				printf("order wrong\n");
 				continue;
 			}
-			fill_sql(select, start,end);
-			printf("%s\n",select );
-
+			fill_sql(select, start,end);				//make a SELECT string, containing attribute
+			
 			start = strstr(query, "FROM") + 5;
 			end = strstr(query, ";") - 1;
 			if(!(start <= end))
@@ -398,12 +391,9 @@ int  main(int argc, char const *argv[])
 				printf("order wrong\n");
 				continue;
 			}
-			fill_sql(from, start,end);
-			printf("%s\n",from);
-
+			fill_sql(from, start,end);				//make a FROM string, contiaining table
 			
-
-			printf("let's analyze(1,1,0)\n");
+			printf("\n");
 			//three types: 
 			/*
 			(1)select = '*' (contain other than * is error)
@@ -414,11 +404,11 @@ int  main(int argc, char const *argv[])
 			{
 				if(strcmp(select, "*") == 0)
 				{
-					printf("select == *, accept\n");
+					//(1)types, *, for all attribute
 					if(strcmp(from, "books") == 0)  
 					{
-						printf("print all book.txt\n" );
-						printf("%-15s%-30s%-65s%-8s%-10s\n", "isbn", "author", "title", "price", "subject");
+						
+						printf("%-15s%-30s%-65s%-8s%-10s\n\n", "isbn", "author", "title", "price", "subject");
 						int i;
 						for(i = 0; i < fp1lines - 1; i++)
 							printf("%-15s%-30s%-65s%-8s%-10s\n", allEntryBook[i].isbn, allEntryBook[i].author, allEntryBook[i].title, allEntryBook[i].price, allEntryBook[i].subject);
@@ -427,7 +417,7 @@ int  main(int argc, char const *argv[])
 					}
 					else if (strcmp(from, "sellRecord") == 0)
 					{
-						printf("print all sellRecord.txt\n");
+						
 						printf("%-5s%-5s%-15s\n", "uid", "no", "isbn_no");
 						int i;
 						for(i = 0; i < fp2lines - 1; i++)
@@ -454,7 +444,7 @@ int  main(int argc, char const *argv[])
 				}
 				else
 				{
-					printf("DISTINCT correct\n");
+					//(2)types, DISTINCT attribute
 					if(strcmp(from, "books") == 0)  
 					{
 						
@@ -462,7 +452,7 @@ int  main(int argc, char const *argv[])
 						start = strstr(query, "DISTINCT") + 9;
 						end = strstr(query, "FROM") - 2;
 						fill_sql(distinct_attri, start, end);
-						printf("%s\n",distinct_attri );
+						printf("%s\n\n",distinct_attri );
 						if(strcmp(distinct_attri, "isbn") != 0 && strcmp(distinct_attri, "author") != 0 && strcmp(distinct_attri, "title") != 0 && strcmp(distinct_attri, "price") != 0 && strcmp(distinct_attri, "subject") != 0)
 						{
 							printf("no such attribute\n");
@@ -470,14 +460,14 @@ int  main(int argc, char const *argv[])
 						}
 						else
 						{
-							printf("print DISTINCT %s in book.txt\n",distinct_attri );
+							
 							bool find_distinct[fp1lines -1];
 							int i;
 							for(i = 0; i < fp1lines - 1; i++)
 								find_distinct[i] = 1;
 							if(strcmp(distinct_attri, "isbn") == 0)
 							{
-								printf("DISTINCT_isbn\n");
+
 								for(i = 0; i < fp1lines - 1; i++)
 								{
 									if(find_distinct[i])
@@ -492,7 +482,7 @@ int  main(int argc, char const *argv[])
 							}
 							else if(strcmp(distinct_attri, "author") == 0)
 							{
-								printf("DISTINCT_author\n");
+
 								for(i = 0; i < fp1lines - 1; i++)
 								{
 									if(find_distinct[i])
@@ -507,7 +497,7 @@ int  main(int argc, char const *argv[])
 							}
 							else if(strcmp(distinct_attri, "title") == 0)
 							{
-								printf("DISTINCT_title\n");
+								
 								for(i = 0; i < fp1lines - 1; i++)
 								{
 									if(find_distinct[i])
@@ -522,7 +512,7 @@ int  main(int argc, char const *argv[])
 							}
 							else if(strcmp(distinct_attri, "price") == 0)
 							{
-								printf("DISTINCT_price\n");
+								
 								for(i = 0; i < fp1lines - 1; i++)
 								{
 									if(find_distinct[i])
@@ -537,7 +527,7 @@ int  main(int argc, char const *argv[])
 							}
 							else
 							{
-								printf("DISTINCT_subject\n");
+								
 								for(i = 0; i < fp1lines - 1; i++)
 								{
 									if(find_distinct[i])
@@ -566,14 +556,14 @@ int  main(int argc, char const *argv[])
 						}
 						else
 						{
-							printf("print DISTINCT %s in sellRecord.txt\n",distinct_attri );
+							
 							bool find_distinct[fp2lines -1];
 							int i;
 							for(i = 0; i < fp2lines - 1; i++)
 								find_distinct[i] = 1;
 							if(strcmp(distinct_attri, "uid") == 0)
 							{
-								printf("DISTINCT_uid\n");
+								
 								for(i = 0; i < fp2lines - 1; i++)
 								{
 									if(find_distinct[i])
@@ -586,9 +576,9 @@ int  main(int argc, char const *argv[])
 									}
 								}
 							}
-							if(strcmp(distinct_attri, "no") == 0)
+							else if(strcmp(distinct_attri, "no") == 0)
 							{
-								printf("DISTINCT_no\n");
+								
 								for(i = 0; i < fp2lines - 1; i++)
 								{
 									if(find_distinct[i])
@@ -603,7 +593,7 @@ int  main(int argc, char const *argv[])
 							}
 							else
 							{
-								printf("DISTINCT_isbn_no\n");
+								
 								for(i = 0; i < fp2lines - 1; i++)
 								{
 									if(find_distinct[i])
@@ -616,6 +606,7 @@ int  main(int argc, char const *argv[])
 									}
 								}
 							}
+							
 
 						}
 					}
@@ -629,17 +620,16 @@ int  main(int argc, char const *argv[])
 			}
 			else
 			{
-				printf("a table with some attribute\n");
+				//type(3): a table with some attribute
 				if(strcmp(from, "books") == 0)
 				{
-					bool include[5] = {0, 0, 0, 0, 0};
-					printf("%s\n", select);
+					bool include[5] = {0, 0, 0, 0, 0};		//include which kinds of attibute in books
+					
 					char *split;
 					bool invalid = 0;
 					split = strtok(select, ",");
 					while (split != NULL)
 					{
-						printf("%s\n",split );
 						if(strcmp(split, "isbn") == 0)
 							include[0] = 1;
 						else if(strcmp(split, "author") == 0)
@@ -664,34 +654,34 @@ int  main(int argc, char const *argv[])
 					{
 						int i;
 						
-						for(i = 0; i < 5; i++)
+						for(i = 0; i < 5; i++)				//print header of inclued attribute
 						{
 							if(include[i])
 							{	
 								switch(i)
 								{
 									case 0:
-										printf("%-15s","isbn" );
-										break;
+									printf("%-15s","isbn" );
+									break;
 									case 1:
-										printf("%-30s","author" );
-										break;
+									printf("%-30s","author" );
+									break;
 									case 2:
-										printf("%-65s","title" );
-										break;
+									printf("%-65s","title" );
+									break;
 									case 3:
-										printf("%-8s","price" );
-										break;
+									printf("%-8s","price" );
+									break;
 									case 4:
-										printf("%-10s","subject");
-										break;
+									printf("%-10s","subject");
+									break;
 
 								}
 
 							}
 						}
-						printf("\n");
-						for(i = 0 ;i < fp1lines - 1;i++)
+						printf("\n\n");
+						for(i = 0 ;i < fp1lines - 1;i++)		//print result of included attribute
 						{
 							int j;
 							for(j = 0; j < 5; j++)
@@ -701,20 +691,20 @@ int  main(int argc, char const *argv[])
 									switch(j)
 									{
 										case 0:
-											printf("%-15s",allEntryBook[i].isbn );
-											break;
+										printf("%-15s",allEntryBook[i].isbn );
+										break;
 										case 1:
-											printf("%-30s",allEntryBook[i].author );
-											break;
+										printf("%-30s",allEntryBook[i].author );
+										break;
 										case 2:
-											printf("%-65s",allEntryBook[i].title );
-											break;
+										printf("%-65s",allEntryBook[i].title );
+										break;
 										case 3:
-											printf("%-8s",allEntryBook[i].price );
-											break;
+										printf("%-8s",allEntryBook[i].price );
+										break;
 										case 4:
-											printf("%-10s",allEntryBook[i].subject);
-											break;
+										printf("%-10s",allEntryBook[i].subject);
+										break;
 									}
 								}
 							}
@@ -725,14 +715,14 @@ int  main(int argc, char const *argv[])
 				}
 				else if(strcmp(from, "sellRecord") == 0)
 				{
-					bool include[3] = {0, 0, 0};
+					bool include[3] = {0, 0, 0};			//include which kinds of attibute in sellRecord
 					printf("%s\n", select);
 					char *split;
 					bool invalid = 0;
 					split = strtok(select, ",");
 					while (split != NULL)
 					{
-						printf("%s\n",split );
+						
 						if(strcmp(split, "uid") == 0)
 							include[0] = 1;
 						else if(strcmp(split, "no") == 0)
@@ -752,27 +742,27 @@ int  main(int argc, char const *argv[])
 					else
 					{
 						int i;
-						for(i = 0; i < 3; i++)
+						for(i = 0; i < 3; i++)				//print header of inclued attribute
 						{
 							if(include[i])
 							{	
 								switch(i)
 								{
 									case 0:
-										printf("%-5s","uid" );
-										break;
+									printf("%-5s","uid" );
+									break;
 									case 1:
-										printf("%-5s","no" );
-										break;
+									printf("%-5s","no" );
+									break;
 									case 2:
-										printf("%-15s","isbn_no" );
-										break;
+									printf("%-15s","isbn_no" );
+									break;
 								}
 
 							}
 						}
 						printf("\n");
-						for(i = 0 ;i < fp2lines - 1;i++)
+						for(i = 0 ;i < fp2lines - 1;i++)		//print result of included attribute
 						{
 							int j;
 							for(j = 0; j < 3; j++)
@@ -782,14 +772,14 @@ int  main(int argc, char const *argv[])
 									switch(j)
 									{
 										case 0:
-											printf("%-5s",allEntrySellRecord[i].uid );
-											break;
+										printf("%-5s",allEntrySellRecord[i].uid );
+										break;
 										case 1:
-											printf("%-5s",allEntrySellRecord[i].no );
-											break;
+										printf("%-5s",allEntrySellRecord[i].no );
+										break;
 										case 2:
-											printf("%-15s",allEntrySellRecord[i].isbn_no );
-											break;
+										printf("%-15s",allEntrySellRecord[i].isbn_no );
+										break;
 										
 									}
 								}
@@ -809,8 +799,7 @@ int  main(int argc, char const *argv[])
 		else
 		{
 			//a query has all select, from, where
-			printf("a query has all select, from, where\n");
-
+			//the query has condition
 			start = strstr(query, "SELECT") + 7;
 			end = strstr(query, "FROM") - 2;
 			if(!(start <= end))
@@ -819,7 +808,7 @@ int  main(int argc, char const *argv[])
 				continue;
 			}
 			fill_sql(select, start,end);
-			printf("%s\n",select );
+
 
 			start = strstr(query, "FROM") + 5;
 			end = strstr(query, "WHERE") - 2;
@@ -829,7 +818,7 @@ int  main(int argc, char const *argv[])
 				continue;
 			}
 			fill_sql(from, start,end);
-			printf("%s\n",from);
+			
 
 			start = strstr(query, "WHERE") + 6;
 			end = strstr(query, ";") - 1;
@@ -839,11 +828,7 @@ int  main(int argc, char const *argv[])
 				continue;
 			}
 			fill_sql(where, start,end);
-			printf("%s\n",where);
-			if(strstr(where, "=") == NULL || strstr(where, "'") == NULL )
-				continue;
-
-			printf("let's analyze(1,1,1)\n");
+			
 			/*
 			two types:
 			(1) in a table(no join)
@@ -851,17 +836,17 @@ int  main(int argc, char const *argv[])
 			*/
 			if(strstr(from, ",") == NULL)
 			{
-				printf("not join\n");
+				//type(1) no join
 				if(strcmp(from, "books") == 0)
 				{
-					bool include[5] = {0, 0, 0, 0, 0};
-					printf("%s\n", select);
+					bool include[5] = {0, 0, 0, 0, 0};			//include which attribute
+				
 					char *split;
 					bool invalid = 0;
 					split = strtok(select, ",");
 					while (split != NULL)
 					{
-						printf("%s\n",split );
+						
 						if(strcmp(split, "isbn") == 0)
 							include[0] = 1;
 						else if(strcmp(split, "author") == 0)
@@ -885,40 +870,41 @@ int  main(int argc, char const *argv[])
 					else
 					{
 						int i;
-						for(i = 0; i < 5; i++)	//print header
+						for(i = 0; i < 5; i++)					//print header of included attribute
 						{
 							if(include[i])
 							{	
 								switch(i)
 								{
 									case 0:
-										printf("%-15s","isbn" );
-										break;
+									printf("%-15s","isbn" );
+									break;
 									case 1:
-										printf("%-30s","author" );
-										break;
+									printf("%-30s","author" );
+									break;
 									case 2:
-										printf("%-65s","title" );
-										break;
+									printf("%-65s","title" );
+									break;
 									case 3:
-										printf("%-8s","price" );
-										break;
+									printf("%-8s","price" );
+									break;
 									case 4:
-										printf("%-10s","subject");
-										break;
+									printf("%-10s","subject");
+									break;
 
 								}
 
 							}
 						}
-						printf("\n");
-						//process conditions:
+						printf("\n\n");
+						//process conditions, split keyword is "AND":
 						i = 0;
 						char conditions[5][100];
-						printf("process condition\n");
+						
 						if(strstr(where, "AND") != 0)
 						{	
 							
+							//where contain "AND", need to split
 							char *temp = str_duplicate(where);
 							while(strstr(temp, "AND") != 0)
 							{
@@ -929,7 +915,7 @@ int  main(int argc, char const *argv[])
 								temp = end + 6;
 								i++;
 							}
-							//fill_sql(conditions[i], temp, strstr(temp, "\0") - 1);
+							//the last substing of remain
 							char *x = temp;
 							int y = 0;
 							while(*x != '\0')
@@ -943,25 +929,27 @@ int  main(int argc, char const *argv[])
 						}
 						else
 						{
+							//no "AND", just one condition
 							fill_sql(conditions[i], where, where + strlen(where) );
 							i++;
-						}		
+						}
+
 						int condition_numbers = i;
-						printf("condition number is %d\n",condition_numbers );
+						
 						if(condition_numbers > 4)
 							continue;
 
-						int use_entry_id[fp1lines -1];		//an array to indicate which entry need to be inclued by hash table
+						int use_entry_id[fp1lines -1];					//an array to indicate which entry need to be inclued by hash table
 						for(i =0 ;i < fp1lines -1 ;i++)
 							use_entry_id[i] = 0;
 
-						printf("process every conditions\n");
+						//process "every" condition
 						for(i =0;i < condition_numbers ;i++)
 						{	
-							printf("%s\n",conditions[i] );
+							
 							char where_attribute[100];
 							char where_condition[100];
-							printf("condition[i] is %s\n", conditions[i]);
+							
 							start = conditions[i];
 							end = strstr(conditions[i], "=") - 1;
 							fill_sql(where_attribute, start, end);
@@ -977,17 +965,16 @@ int  main(int argc, char const *argv[])
 								}
 							}
 							fill_sql(where_condition, start, end);
-							
-							printf("(%s)...(%s)\n",where_attribute, where_condition );
+							//WHERE condition get string between ' '
 							
 							if(strcmp(where_attribute, "isbn") == 0 )
 							{
-								//printf("look up hash isbn\n");
+								
 								int lookup = hash_function(where_condition);
 								Slot_Book *travel = allIsbn.buckets[lookup];
 								while(travel != NULL)
 								{
-									//printf("data is %s, form entey %d\n",travel -> data, travel -> EntryBook_id );
+									
 									if(strcmp(travel -> data, where_condition) == 0)
 										use_entry_id[travel -> EntryBook_id] ++;
 									travel = travel -> next;
@@ -995,12 +982,12 @@ int  main(int argc, char const *argv[])
 							}
 							else if(strcmp(where_attribute, "author") == 0 )
 							{
-								//printf("look up hash author\n");
+								
 								int lookup = hash_function(where_condition);
 								Slot_Book *travel = allAuthor.buckets[lookup];
 								while(travel != NULL)
 								{
-									//printf("data is %s, form entey %d\n",travel -> data, travel -> EntryBook_id );
+									
 									if(strcmp(travel -> data, where_condition) == 0)
 										use_entry_id[travel -> EntryBook_id] ++;
 									travel = travel -> next;
@@ -1008,12 +995,12 @@ int  main(int argc, char const *argv[])
 							}
 							else if(strcmp(where_attribute, "title") == 0 )
 							{
-								//printf("look up hash title\n");
+								
 								int lookup = hash_function(where_condition);
 								Slot_Book *travel = allTitle.buckets[lookup];
 								while(travel != NULL)
 								{
-									//printf("data is %s, form entey %d\n",travel -> data, travel -> EntryBook_id );
+									
 									if(strcmp(travel -> data, where_condition) == 0)
 										use_entry_id[travel -> EntryBook_id] ++;
 									travel = travel -> next;
@@ -1021,12 +1008,12 @@ int  main(int argc, char const *argv[])
 							}
 							else if(strcmp(where_attribute, "price") == 0 )
 							{
-								//printf("look up hash price\n");
+								
 								int lookup = hash_function(where_condition);
 								Slot_Book *travel = allPrice.buckets[lookup];
 								while(travel != NULL)
 								{
-									//printf("data is %s, form entey %d\n",travel -> data, travel -> EntryBook_id );
+									
 									if(strcmp(travel -> data, where_condition) == 0)
 										use_entry_id[travel -> EntryBook_id] ++;
 									travel = travel -> next;
@@ -1034,12 +1021,12 @@ int  main(int argc, char const *argv[])
 							}
 							else if(strcmp(where_attribute, "subject") == 0 )
 							{
-								//printf("look up hash subject\n");
+								
 								int lookup = hash_function(where_condition);
 								Slot_Book *travel = allSubject.buckets[lookup];
 								while(travel != NULL)
 								{
-									//printf("data is %s, form entey %d\n",travel -> data, travel -> EntryBook_id );
+									
 									if(strcmp(travel -> data, where_condition) == 0)
 										use_entry_id[travel -> EntryBook_id] ++;
 									travel = travel -> next;
@@ -1055,11 +1042,12 @@ int  main(int argc, char const *argv[])
 
 						if(invalid)
 							continue;
+
 						//output:
-						printf("\n");
+
 						for(i = 0 ;i < fp1lines - 1;i++)
 						{
-							if(use_entry_id[i] == condition_numbers)
+							if(use_entry_id[i] == condition_numbers)		//all condition match, then output 
 							{	
 								int j;
 								for(j = 0; j < 5; j++)
@@ -1069,20 +1057,20 @@ int  main(int argc, char const *argv[])
 										switch(j)
 										{
 											case 0:
-												printf("%-15s",allEntryBook[i].isbn );
-												break;
+											printf("%-15s",allEntryBook[i].isbn );
+											break;
 											case 1:
-												printf("%-30s",allEntryBook[i].author );
-												break;
+											printf("%-30s",allEntryBook[i].author );
+											break;
 											case 2:
-												printf("%-65s",allEntryBook[i].title );
-												break;
+											printf("%-65s",allEntryBook[i].title );
+											break;
 											case 3:
-												printf("%-8s",allEntryBook[i].price );
-												break;
+											printf("%-8s",allEntryBook[i].price );
+											break;
 											case 4:
-												printf("%-10s",allEntryBook[i].subject);
-												break;
+											printf("%-10s",allEntryBook[i].subject);
+											break;
 										}
 									}
 								}
@@ -1093,14 +1081,14 @@ int  main(int argc, char const *argv[])
 				}
 				else if(strcmp(from, "sellRecord") == 0)
 				{
-					bool include[3] = {0, 0, 0};
-					printf("%s\n", select);
+					bool include[3] = {0, 0, 0};			//include which of attribute
+					
 					char *split;
 					bool invalid = 0;
 					split = strtok(select, ",");
 					while (split != NULL)
 					{
-						printf("%s\n",split );
+						
 						if(strcmp(split, "uid") == 0)
 							include[0] = 1;
 						else if(strcmp(split, "no") == 0)
@@ -1120,32 +1108,34 @@ int  main(int argc, char const *argv[])
 					else
 					{
 						int i;
-						for(i = 0; i < 3; i++)	//print header
+						for(i = 0; i < 3; i++)				//print header of included attribute
 						{
 							if(include[i])
 							{	
 								switch(i)
 								{
 									case 0:
-										printf("%-5s","uid" );
-										break;
+									printf("%-5s","uid" );
+									break;
 									case 1:
-										printf("%-5s","no" );
-										break;
+									printf("%-5s","no" );
+									break;
 									case 2:
-										printf("%-15s","isbn_no" );
-										break;
+									printf("%-15s","isbn_no" );
+									break;
 
 								}
 
 							}
 						}
-						printf("\n");
-						//process conditions:
+						printf("\n\n");
+
+					
+						//process conditions, split keyword is "AND":
 						i = 0;
 						char conditions[5][100];
-						printf("process condition\n");
-						if(strstr(where, "AND") != 0)
+					
+						if(strstr(where, "AND") != 0)		//has AND, do split
 						{	
 							
 							char *temp = str_duplicate(where);
@@ -1176,7 +1166,7 @@ int  main(int argc, char const *argv[])
 							i++;
 						}		
 						int condition_numbers = i;
-						printf("condition number is %d\n",condition_numbers );
+						
 						if(condition_numbers > 4)
 							continue;
 
@@ -1184,13 +1174,13 @@ int  main(int argc, char const *argv[])
 						for(i =0 ;i < fp2lines -1 ;i++)
 							use_entry_id[i] = 0;
 
-						printf("process every conditions\n");
+						//process "every" condition
 						for(i =0;i < condition_numbers ;i++)
 						{	
-							printf("%s\n",conditions[i] );
+							
 							char where_attribute[100];
 							char where_condition[100];
-							printf("condition[i] is %s\n", conditions[i]);
+							
 							start = conditions[i];
 							end = strstr(conditions[i], "=") - 1;
 							fill_sql(where_attribute, start, end);
@@ -1206,8 +1196,9 @@ int  main(int argc, char const *argv[])
 								}
 							}
 							fill_sql(where_condition, start, end);
+							//WHERE contian string between ' '
 							
-							printf("(%s)...(%s)\n",where_attribute, where_condition );
+	
 							
 							if(strcmp(where_attribute, "uid") == 0 )
 							{
@@ -1258,11 +1249,12 @@ int  main(int argc, char const *argv[])
 
 						if(invalid)
 							continue;
+
 						//output:
-						printf("\n");
+
 						for(i = 0 ;i < fp2lines - 1;i++)
 						{
-							if(use_entry_id[i] == condition_numbers)
+							if(use_entry_id[i] == condition_numbers)			//all condition match, then output 
 							{	
 								int j;
 								for(j = 0; j < 3; j++)
@@ -1272,14 +1264,14 @@ int  main(int argc, char const *argv[])
 										switch(j)
 										{
 											case 0:
-												printf("%-5s",allEntrySellRecord[i].uid );
-												break;
+											printf("%-5s",allEntrySellRecord[i].uid );
+											break;
 											case 1:
-												printf("%-5s",allEntrySellRecord[i].no );
-												break;
+											printf("%-5s",allEntrySellRecord[i].no );
+											break;
 											case 2:
-												printf("%-15s",allEntrySellRecord[i].isbn_no );
-												break;
+											printf("%-15s",allEntrySellRecord[i].isbn_no );
+											break;
 											
 										}
 									}
@@ -1297,8 +1289,559 @@ int  main(int argc, char const *argv[])
 			}
 			else
 			{
-				printf("need to join\n");
+				//type(2) need to join
 				//join
+				char *after_join[100][8];		//string of after join, with 8 attribute
+				int join_number = 0;
+				if(strcmp(from, "books,sellRecord") == 0 || strcmp(from, "sellRecord,books") == 0)
+				{
+					bool include[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+					
+					char *split;
+					bool invalid = 0;
+					split = strtok(select, ",");
+					while (split != NULL)
+					{
+						
+						if(strcmp(split, "isbn") == 0)
+							include[0] = 1;
+						else if(strcmp(split, "author") == 0)
+							include[1] = 1;
+						else if(strcmp(split, "title") == 0)
+							include[2] = 1;
+						else if(strcmp(split, "price") == 0)
+							include[3] = 1;
+						else if(strcmp(split, "subject") == 0)
+							include[4] = 1;
+						else if(strcmp(split, "uid") == 0)
+							include[5] = 1;
+						else if(strcmp(split, "no") == 0)
+							include[6] = 1;
+						else if(strcmp(split, "isbn_no") == 0)
+							include[7] = 1;
+						else
+						{
+							printf("no such attribute\n");
+							invalid = 1;
+							break;
+						}
+						split = strtok (NULL, ",");
+					} 
+					if(invalid)
+						continue;
+					else
+					{
+						int i;
+						for(i = 0; i < 8; i++)					//print header of include attribute
+						{
+							if(include[i])
+							{	
+								switch(i)
+								{
+									case 0:
+									printf("%-15s","isbn" );
+									break;
+									case 1:
+									printf("%-30s","author" );
+									break;
+									case 2:
+									printf("%-65s","title" );
+									break;
+									case 3:
+									printf("%-8s","price" );
+									break;
+									case 4:
+									printf("%-10s","subject");
+									break;
+									case 5:
+									printf("%-5s","uid");
+									break;
+									case 6:
+									printf("%-5s","no");
+									break;
+									case 7:
+									printf("%-15s","isbn_no");
+									break;
+
+								}
+
+							}
+						}
+						printf("\n\n");
+
+						//process conditions:
+						i = 0;
+						char conditions[5][100];
+						
+						if(strstr(where, "AND") != 0)			//with AND, has 1+ condition
+						{	
+							
+							char *temp = str_duplicate(where);
+							while(strstr(temp, "AND") != 0)
+							{
+								start = temp;
+								end = strstr(temp, "AND") - 2;
+								fill_sql(conditions[i], start, end);
+
+								temp = end + 6;
+								i++;
+							}
+							//remainder
+							char *x = temp;
+							int y = 0;
+							while(*x != '\0')
+							{
+								conditions[i][y] = *x;
+								x++;
+								y++;
+							}
+							conditions[i][y] = '\0';
+							i++;
+						}
+						else									//without AND
+						{
+							fill_sql(conditions[i], where, where + strlen(where) );
+							i++;
+						}		
+						int condition_numbers = i;
+						
+						if(condition_numbers > 4)
+							continue;
+
+						int join_sucess[fp1lines -1];		//an array to indicate which entry make a link by join
+						for(i =0 ;i < fp1lines -1 ;i++)
+							join_sucess[i] = -1;
+
+						int use_join_entry[(fp1lines -1) * (fp2lines - 1)];		//an array to indicate which entry make a link by join
+						for(i =0 ;i < (fp1lines -1) * (fp2lines - 1) ;i++)
+							use_join_entry[i] = 0;
+
+						//process "every" condition
+						for(i =0;i < condition_numbers ;i++)
+						{	
+							bool right_is_attribute = 0;
+							
+							char equal_left[100];		//need to be attribute
+							char equal_right[100];		//may be attribute or string
+							
+							start = conditions[i];
+							end = strstr(conditions[i], "=") - 1;
+							fill_sql(equal_left, start, end);
+
+							int counting = 0;
+							char *cursor = strstr(conditions[i], "=") + 1;
+							while(*cursor != '\0')
+							{
+								if(*cursor == '\'')
+									counting++;
+								cursor++;
+							}
+							if(counting == 2)	//right segement is string, not attribute
+							{
+								
+								right_is_attribute = 0;
+								start = strstr(conditions[i], "=") + 2;
+								char *find;
+								for(find = conditions[i] + strlen(conditions[i]) ; ;find --)
+								{
+									if(*find == '\'')
+									{	
+										end = find - 1;
+										break;
+									}
+								}
+							}
+							else			//right segment will seen as attribute
+							{
+								
+								right_is_attribute = 1;
+								start = strstr(conditions[i], "=") + 1;
+								char *find;
+								for(find = conditions[i] + strlen(conditions[i]) ; ;find --)
+								{
+									if(*find == '\0')
+									{	
+										end = find - 1;
+										break;
+									}
+								}
+							}
+							fill_sql(equal_right, start, end);
+							
+
+							if(strcmp(equal_left, "isbn") != 0 &&
+								strcmp(equal_left, "author") != 0 &&
+								strcmp(equal_left, "title") != 0 &&
+								strcmp(equal_left, "price") != 0 &&
+								strcmp(equal_left, "subject") != 0 &&
+								strcmp(equal_left, "uid") != 0 &&
+								strcmp(equal_left, "no") != 0 &&
+								strcmp(equal_left, "isbn_no") != 0)
+							{
+								//left is not an attribute
+								invalid = 1;
+								break;
+							}
+							if(right_is_attribute)
+							{
+								if(strcmp(equal_right, "isbn") != 0 && 
+									strcmp(equal_right, "author") != 0 && 
+									strcmp(equal_right, "title") != 0 && 
+									strcmp(equal_right, "price") != 0 &&	
+									strcmp(equal_right, "subject") != 0 && 
+									strcmp(equal_right, "uid") != 0 && 
+									strcmp(equal_right, "no") != 0 &&	
+									strcmp(equal_right, "isbn_no") != 0)
+								{
+									//but right is not an attribute
+									invalid = 1;
+									break;
+								}
+								else
+								{
+									//try to build link between two table
+									if( (strcmp(equal_left, "isbn") == 0 && strcmp(equal_right, "isbn_no") == 0) ||	
+										(strcmp(equal_left, "isbn_no") == 0 && strcmp(equal_right,"isbn") == 0) )	//has necessary of join
+									{
+										
+										/*then start join, for every entry, get it string,
+										compute the hash result to get a bucket id for the other table.*/
+										
+										int i ;
+										for(i = 0; i < fp1lines - 1 ;i++)
+										{
+											Slot_sellRecord *travel = allIsbn_No.buckets[hash_function(allEntryBook[i].isbn)];
+											while(travel != NULL)
+											{
+												if(strcmp(travel -> data, allEntryBook[i].isbn) == 0)
+												{	
+													join_sucess[i] = travel -> EntrySellRecord_id;
+													
+													after_join[join_number][0] = str_duplicate(allEntryBook[i].isbn);
+													after_join[join_number][1] = str_duplicate(allEntryBook[i].author);
+													after_join[join_number][2] = str_duplicate(allEntryBook[i].title);
+													after_join[join_number][3] = str_duplicate(allEntryBook[i].price);
+													after_join[join_number][4] = str_duplicate(allEntryBook[i].subject);
+													after_join[join_number][5] = str_duplicate(allEntrySellRecord[ travel -> EntrySellRecord_id].uid);
+													after_join[join_number][6] = str_duplicate(allEntrySellRecord[ travel -> EntrySellRecord_id].no);
+													after_join[join_number][7] = str_duplicate(allEntrySellRecord[ travel -> EntrySellRecord_id].isbn_no);
+													join_number++;
+												}
+												travel = travel -> next;
+											}
+											
+										}
+										
+										
+									}
+									else		//without necessary of join
+									{
+										invalid = 1;
+										break;
+									}
+								}
+
+							}
+							else
+							{
+								//right is string, look up after_join_table
+								
+								int i;
+								if(strcmp(equal_left, "isbn") == 0 )
+								{
+									int i;
+									bool can_find_in_join_table[join_number];
+									for(i = 0; i < join_number ; i++)
+										can_find_in_join_table[i] = 0;
+									int lookup = hash_function(equal_right);
+									Slot_Book *travel = allIsbn.buckets[lookup];
+									while(travel != NULL)
+									{
+										if(strcmp(travel -> data, equal_right) == 0)
+										{		
+											for(i = 0; i < join_number; i++)
+											{
+												if(strcmp(after_join[i][0], equal_right) == 0)
+												{
+													can_find_in_join_table[i] = 1;
+
+												}	
+											}
+										}
+										travel = travel -> next;
+									}
+									for(i = 0; i < join_number ; i++)
+									{	
+										if(can_find_in_join_table[i])
+											use_join_entry[i] ++;
+									}
+								}
+								else if(strcmp(equal_left, "author") == 0 )
+								{
+									int i;
+									bool can_find_in_join_table[join_number];
+									for(i = 0; i < join_number ; i++)
+										can_find_in_join_table[i] = 0;
+									int lookup = hash_function(equal_right);
+									Slot_Book *travel = allAuthor.buckets[lookup];
+									while(travel != NULL)
+									{
+										if(strcmp(travel -> data, equal_right) == 0)
+										{		
+											for(i = 0; i < join_number; i++)
+											{
+												if(strcmp(after_join[i][1], equal_right) == 0)
+												{
+													can_find_in_join_table[i] = 1;
+												}	
+											}
+										}
+										travel = travel -> next;
+									}
+									for(i = 0; i < join_number ; i++)
+									{	
+										if(can_find_in_join_table[i])
+											use_join_entry[i] ++;
+									}
+								}
+								else if(strcmp(equal_left, "title") == 0 )
+								{
+									int i;
+									bool can_find_in_join_table[join_number];
+									for(i = 0; i < join_number ; i++)
+										can_find_in_join_table[i] = 0;
+									int lookup = hash_function(equal_right);
+									Slot_Book *travel = allTitle.buckets[lookup];
+									while(travel != NULL)
+									{
+										if(strcmp(travel -> data, equal_right) == 0)
+										{		
+											for(i = 0; i < join_number; i++)
+											{
+												if(strcmp(after_join[i][2], equal_right) == 0)
+												{
+													can_find_in_join_table[i] = 1;
+
+												}	
+											}
+										}
+										travel = travel -> next;
+									}
+									for(i = 0; i < join_number ; i++)
+									{	
+										if(can_find_in_join_table[i])
+											use_join_entry[i] ++;
+									}
+								}
+								else if(strcmp(equal_left, "price") == 0 )
+								{
+									int i;
+									bool can_find_in_join_table[join_number];
+									for(i = 0; i < join_number ; i++)
+										can_find_in_join_table[i] = 0;
+									int lookup = hash_function(equal_right);
+									Slot_Book *travel = allPrice.buckets[lookup];
+									while(travel != NULL)
+									{
+										if(strcmp(travel -> data, equal_right) == 0)
+										{		
+											for(i = 0; i < join_number; i++)
+											{
+												if(strcmp(after_join[i][3], equal_right) == 0)
+												{
+													can_find_in_join_table[i] = 1;
+
+												}	
+											}
+										}
+										travel = travel -> next;
+									}
+									for(i = 0; i < join_number ; i++)
+									{	
+										if(can_find_in_join_table[i])
+											use_join_entry[i] ++;
+									}
+								}
+								else if(strcmp(equal_left, "subject") == 0 )
+								{
+									int i;
+									bool can_find_in_join_table[join_number];
+									for(i = 0; i < join_number ; i++)
+										can_find_in_join_table[i] = 0;
+									int lookup = hash_function(equal_right);
+									Slot_Book *travel = allSubject.buckets[lookup];
+									while(travel != NULL)
+									{
+										if(strcmp(travel -> data, equal_right) == 0)
+										{		
+											for(i = 0; i < join_number; i++)
+											{
+												if(strcmp(after_join[i][4], equal_right) == 0)
+												{
+													can_find_in_join_table[i] = 1;
+
+												}	
+											}
+										}
+										travel = travel -> next;
+									}
+									for(i = 0; i < join_number ; i++)
+									{	
+										if(can_find_in_join_table[i])
+											use_join_entry[i] ++;
+									}
+								}
+								else if(strcmp(equal_left, "uid") == 0 )
+								{
+									int i;
+									bool can_find_in_join_table[join_number];
+									for(i = 0; i < join_number ; i++)
+										can_find_in_join_table[i] = 0;
+									int lookup = hash_function(equal_right);
+									Slot_sellRecord *travel = allUid.buckets[lookup];
+									while(travel != NULL)
+									{
+										if(strcmp(travel -> data, equal_right) == 0)
+										{		
+											for(i = 0; i < join_number; i++)
+											{
+												if(strcmp(after_join[i][5], equal_right) == 0)
+												{
+													can_find_in_join_table[i] = 1;
+
+												}	
+											}
+										}
+										travel = travel -> next;
+									}
+									for(i = 0; i < join_number ; i++)
+									{	
+										if(can_find_in_join_table[i])
+											use_join_entry[i] ++;
+									}
+								}
+								else if(strcmp(equal_left, "no") == 0 )
+								{
+									int i;
+									bool can_find_in_join_table[join_number];
+									for(i = 0; i < join_number ; i++)
+										can_find_in_join_table[i] = 0;
+									int lookup = hash_function(equal_right);
+									Slot_sellRecord *travel = allNo.buckets[lookup];
+									while(travel != NULL)
+									{
+										if(strcmp(travel -> data, equal_right) == 0)
+										{		
+											for(i = 0; i < join_number; i++)
+											{
+												if(strcmp(after_join[i][6], equal_right) == 0)
+												{
+													can_find_in_join_table[i] = 1;
+												}	
+											}
+										}
+										travel = travel -> next;
+									}
+									for(i = 0; i < join_number ; i++)
+									{	
+										if(can_find_in_join_table[i])
+											use_join_entry[i] ++;
+									}
+								}
+								else if(strcmp(equal_left, "isbn_no") == 0 )
+								{
+									int i;
+									bool can_find_in_join_table[join_number];
+									for(i = 0; i < join_number ; i++)
+										can_find_in_join_table[i] = 0;
+									int lookup = hash_function(equal_right);
+									Slot_sellRecord *travel = allIsbn_No.buckets[lookup];
+									while(travel != NULL)
+									{
+										if(strcmp(travel -> data, equal_right) == 0)
+										{		
+											for(i = 0; i < join_number; i++)
+											{
+												if(strcmp(after_join[i][7], equal_right) == 0)
+												{
+													can_find_in_join_table[i] = 1;
+												}	
+											}
+										}
+										travel = travel -> next;
+									}
+									for(i = 0; i < join_number ; i++)
+									{	
+										if(can_find_in_join_table[i])
+											use_join_entry[i] ++;
+									}
+								}
+								else
+								{
+									printf("no such attribute\n");
+									invalid = 1;
+									break;
+								}
+
+
+							}
+
+						}
+
+						if(invalid)
+							continue;
+
+						//output:
+				
+						for(i = 0 ;i < join_number;i++)
+						{
+							if(use_join_entry[i] == condition_numbers - 1)	//because 1 is  join condition
+							{	
+								int j;
+								for(j = 0; j < 8; j++)
+								{
+									if(include[j])
+									{	
+										switch(j)
+										{
+											case 0:
+											printf("%-15s",after_join[i][0] );
+											break;
+											case 1:
+											printf("%-30s",after_join[i][1] );
+											break;
+											case 2:
+											printf("%-65s",after_join[i][2] );
+											break;
+											case 3:
+											printf("%-8s",after_join[i][3] );
+											break;
+											case 4:
+											printf("%-10s",after_join[i][4]);
+											break;
+											case 5:
+											printf("%-5s",after_join[i][5]);
+											break;
+											case 6:
+											printf("%-5s",after_join[i][6]);
+											break;
+											case 7:
+											printf("%-15s",after_join[i][7]);
+											break;
+
+										}
+									}
+								}
+								printf("\n");
+							}
+						}
+					}
+				}
+				else
+				{
+					//join failed
+					continue;
+				}
 			}
 		}
 	}
@@ -1311,9 +1854,9 @@ int countlines(FILE *fp)
 	char ch;
 	while(!feof(fp))
 	{
-  		ch = fgetc(fp);
-  		if(ch == '\n')
-    			countlines++;
+		ch = fgetc(fp);
+		if(ch == '\n')
+			countlines++;
 	}
 	return countlines;
 }
@@ -1359,10 +1902,10 @@ void hashing_isbn(HashTable_isbn *h, EntryBook *entries, int entry_number)
 	int i;
 	for(i = 0; i < entry_number; i++)
 	{	
-		//printf("%s-----",entries[i].isbn );
+		
 		//do hash
 		int hash_result = hash_function(entries[i].isbn);
-		//printf("hash result is %d\n",hash_result );
+		
 		if(h -> buckets[hash_result] == NULL)
 		{	
 			
@@ -1392,10 +1935,10 @@ void hashing_author(HashTable_author *h, EntryBook *entries, int entry_number)
 	int i;
 	for(i = 0; i < entry_number; i++)
 	{	
-		//printf("%s-----",entries[i].author );
+		
 		//do hash
 		int hash_result = hash_function(entries[i].author);
-		//printf("hash result is %d\n",hash_result );
+		
 		if(h -> buckets[hash_result] == NULL)
 		{	
 			
@@ -1425,10 +1968,10 @@ void hashing_title(HashTable_title *h, EntryBook *entries, int entry_number)
 	int i;
 	for(i = 0; i < entry_number; i++)
 	{	
-		//printf("%s-----",entries[i].title);
+		
 		//do hash
 		int hash_result = hash_function(entries[i].title);
-		//printf("hash result is %d\n",hash_result );
+		
 		if(h -> buckets[hash_result] == NULL)
 		{	
 			
@@ -1458,10 +2001,10 @@ void hashing_price(HashTable_price *h, EntryBook *entries, int entry_number)
 	int i;
 	for(i = 0; i < entry_number; i++)
 	{	
-		//printf("%s-----",entries[i].price);
+		
 		//do hash
 		int hash_result = hash_function(entries[i].price);
-		//printf("hash result is %d\n",hash_result );
+		
 		if(h -> buckets[hash_result] == NULL)
 		{	
 			
@@ -1491,10 +2034,10 @@ void hashing_subject(HashTable_subject *h, EntryBook *entries, int entry_number)
 	int i;
 	for(i = 0; i < entry_number; i++)
 	{	
-		//printf("%s-----",entries[i].subject);
+		
 		//do hash
 		int hash_result = hash_function(entries[i].subject);
-		//printf("hash result is %d\n",hash_result );
+		
 		if(h -> buckets[hash_result] == NULL)
 		{	
 			
@@ -1524,10 +2067,10 @@ void hashing_uid(HashTable_uid *h, EntrySellRecord *entries, int entry_number)
 	int i;
 	for(i = 0; i < entry_number; i++)
 	{	
-		//printf("%s-----",entries[i].uid);
+		
 		//do hash
 		int hash_result = hash_function(entries[i].uid);
-		//printf("hash result is %d\n",hash_result );
+		
 		if(h -> buckets[hash_result] == NULL)
 		{	
 			
@@ -1557,10 +2100,10 @@ void hashing_no(HashTable_no *h, EntrySellRecord *entries, int entry_number)
 	int i;
 	for(i = 0; i < entry_number; i++)
 	{	
-		//printf("%s-----",entries[i].no);
+		
 		//do hash
 		int hash_result = hash_function(entries[i].no);
-		//printf("hash result is %d\n",hash_result );
+		
 		if(h -> buckets[hash_result] == NULL)
 		{	
 			
@@ -1590,10 +2133,10 @@ void hashing_isbn_no(HashTable_isbn_no *h, EntrySellRecord *entries, int entry_n
 	int i;
 	for(i = 0; i < entry_number; i++)
 	{	
-		//printf("%s-----",entries[i].isbn_no);
+		
 		//do hash
 		int hash_result = hash_function(entries[i].isbn_no);
-		//printf("hash result is %d\n",hash_result );
+		
 		if(h -> buckets[hash_result] == NULL)
 		{	
 			
